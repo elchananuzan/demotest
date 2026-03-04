@@ -36,8 +36,8 @@ export default function CategoryChart({ alerts }: CategoryChartProps) {
     <div className="bg-bg-card border border-border rounded-2xl p-6">
       <h3 className="text-sm font-medium text-text-primary mb-4">{t.stats.byCategory}</h3>
 
-      <div className="flex items-center gap-6">
-        <div className="w-40 h-40 shrink-0">
+      <div className="flex flex-col sm:flex-row items-center gap-6">
+        <div className="w-32 h-32 sm:w-40 sm:h-40 shrink-0">
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
               <Pie

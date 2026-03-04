@@ -41,7 +41,7 @@ export default function TopCitiesChart({ alerts }: TopCitiesChartProps) {
         {data.map((city, i) => (
           <div key={city.name_he} className="flex items-center gap-3">
             <span className="font-mono text-xs text-text-secondary w-5 text-right">{i + 1}</span>
-            <span className="text-sm text-text-primary w-28 truncate">
+            <span className="text-sm text-text-primary w-20 sm:w-28 truncate">
               {locale === "he" ? city.name_he : city.name_en}
             </span>
             <div className="flex-1 h-2 bg-border rounded-full overflow-hidden">

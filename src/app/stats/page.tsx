@@ -12,7 +12,7 @@ import PeakTimesHeatmap from "@/components/Charts/PeakTimesHeatmap";
 import RegionChart from "@/components/Charts/RegionChart";
 
 export default function StatsPage() {
-  const { t } = useApp();
+  const { t, locale } = useApp();
   const { alerts, alertsToday, alerts24h } = useAlerts();
 
   // Since Oct 7 estimate
@@ -40,6 +40,7 @@ export default function StatsPage() {
         </div>
 
         {/* Charts grid */}
+        <h2 className="text-lg font-semibold text-text-primary mb-4">{locale === "he" ? "ניתוח" : "Analysis"}</h2>
         <div className="grid gap-6 md:grid-cols-2 mb-6">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
             <CategoryChart alerts={alerts} />
@@ -59,6 +60,7 @@ export default function StatsPage() {
         </div>
 
         {/* Full width charts */}
+        <h2 className="text-lg font-semibold text-text-primary mb-4">{locale === "he" ? "מפות חום" : "Heatmaps"}</h2>
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.7 }} className="mb-6">
           <AlertHeatmap alerts={alerts} />
         </motion.div>

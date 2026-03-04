@@ -35,15 +35,15 @@ export default function AlertHeatmap({ alerts }: AlertHeatmapProps) {
     return days;
   }, [alerts]);
 
-  const colors = ["#12121a", "#3d1111", "#7a1a1a", "#b52222", "#ff3333"];
+  const colors = ["#1a1a24", "#5a1a1a", "#7a1a1a", "#b52222", "#ff3333"];
   const weeks = Math.ceil(heatmapData.length / 7);
 
   return (
     <div className="bg-bg-card border border-border rounded-2xl p-6">
       <h3 className="text-sm font-medium text-text-primary mb-4">{t.stats.heatmap}</h3>
 
-      <div className="overflow-x-auto">
-        <div className="flex gap-[3px]" style={{ minWidth: `${weeks * 15}px` }}>
+      <div className="overflow-x-auto pb-2 -mx-2 px-2">
+        <div className="flex gap-[2px] sm:gap-[3px]" style={{ minWidth: `${weeks * 13}px` }}>
           {Array.from({ length: weeks }).map((_, weekIdx) => (
             <div key={weekIdx} className="flex flex-col gap-[3px]">
               {Array.from({ length: 7 }).map((_, dayIdx) => {

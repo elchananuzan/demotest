@@ -177,9 +177,20 @@ function ShelterCountdown({ seconds, locale }: { seconds: number; locale: string
     return () => clearInterval(interval);
   }, [seconds]);
 
+  if (remaining === 0) {
+    return (
+      <div className="flex items-center justify-center gap-2">
+        <span className="text-2xl">🛡️</span>
+        <span className="font-bold text-lg text-white">
+          {locale === "he" ? "הישארו במיגון!" : "Stay in shelter!"}
+        </span>
+      </div>
+    );
+  }
+
   return (
     <div className="flex items-center justify-center gap-3">
-      <span className="font-mono text-5xl font-bold text-white tabular-nums">{remaining}</span>
+      <span className="font-mono text-3xl sm:text-5xl font-bold text-white tabular-nums">{remaining}</span>
       <span className="text-white/70 text-sm">
         {locale === "he" ? "שניות למיגון" : "seconds to shelter"}
       </span>
@@ -293,7 +304,7 @@ function SVGMap({
         return (
           <g key={`lat-${lat}`}>
             <line x1="0" y1={y} x2={W} y2={y} stroke="#1e1e2e" strokeWidth="0.5" strokeDasharray="4,4" />
-            <text x="4" y={y - 3} fill="#333344" fontSize="8" fontFamily="JetBrains Mono, monospace">{lat}°N</text>
+            <text x="4" y={y - 3} fill="#555566" fontSize="8" fontFamily="JetBrains Mono, monospace">{lat}°N</text>
           </g>
         );
       })}
@@ -302,7 +313,7 @@ function SVGMap({
         return (
           <g key={`lng-${lng}`}>
             <line x1={x} y1="0" x2={x} y2={H} stroke="#1e1e2e" strokeWidth="0.5" strokeDasharray="4,4" />
-            <text x={x + 3} y={H - 4} fill="#333344" fontSize="8" fontFamily="JetBrains Mono, monospace">{lng}°E</text>
+            <text x={x + 3} y={H - 4} fill="#555566" fontSize="8" fontFamily="JetBrains Mono, monospace">{lng}°E</text>
           </g>
         );
       })}

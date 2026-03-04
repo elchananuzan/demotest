@@ -37,7 +37,7 @@ export default function LivePage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-30 bg-alert-red/10 pointer-events-none"
+            className="fixed inset-0 z-20 bg-alert-red/10 pointer-events-none"
           >
             <div className="absolute inset-0 border-[3px] border-alert-red/40 animate-pulse" />
           </motion.div>
@@ -45,7 +45,7 @@ export default function LivePage() {
       </AnimatePresence>
 
       {/* Status bar */}
-      <div className="fixed top-[5.5rem] left-0 right-0 z-30 px-4">
+      <div className="fixed top-[5.5rem] left-0 right-0 z-[35] px-4 pointer-events-none">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           {/* Threat level badge */}
           <motion.div
@@ -84,8 +84,8 @@ export default function LivePage() {
       </div>
 
       {/* Bottom stat cards */}
-      <div className="fixed bottom-0 left-0 right-0 z-30 p-4 bg-gradient-to-t from-bg via-bg/90 to-transparent pointer-events-none">
-        <div className="max-w-7xl mx-auto grid grid-cols-2 sm:grid-cols-4 gap-3 pointer-events-auto">
+      <div className="fixed bottom-0 left-0 right-0 z-[25] p-3 sm:p-4 bg-gradient-to-t from-bg via-bg/90 to-transparent pointer-events-none">
+        <div className="max-w-7xl mx-auto grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 pointer-events-auto">
           <StatCard
             label={t.live.alertsToday}
             value={alertsToday.length}
@@ -98,26 +98,30 @@ export default function LivePage() {
             icon="📊"
             delay={0.1}
           />
-          <StatCard
-            label={locale === "he" ? "ערים מותקפות" : "Cities Targeted"}
-            value={new Set(alerts24h.flatMap((a) => a.cities)).size}
-            icon="🏙️"
-            delay={0.2}
-          />
-          <StatCard
-            label={locale === "he" ? "רקטות" : "Rockets"}
-            value={alerts24h.filter((a) => a.category === 1).length}
-            icon="🚀"
-            color="#ff6600"
-            delay={0.3}
-          />
+          <div className="hidden sm:block">
+            <StatCard
+              label={locale === "he" ? "ערים מותקפות" : "Cities Targeted"}
+              value={new Set(alerts24h.flatMap((a) => a.cities)).size}
+              icon="🏙️"
+              delay={0.2}
+            />
+          </div>
+          <div className="hidden sm:block">
+            <StatCard
+              label={locale === "he" ? "רקטות" : "Rockets"}
+              value={alerts24h.filter((a) => a.category === 1).length}
+              icon="🚀"
+              color="#ff6600"
+              delay={0.3}
+            />
+          </div>
         </div>
       </div>
 
       {/* Demo: trigger Where Were You */}
       <button
         onClick={() => setShowWhereWereYou(true)}
-        className="fixed bottom-36 sm:bottom-28 right-4 z-40 px-3 py-2 text-[10px] font-medium bg-bg-card/80 backdrop-blur border border-border rounded-xl text-text-secondary hover:text-alert-red hover:border-alert-red/30 transition-all"
+        className="fixed bottom-36 sm:bottom-28 right-4 z-40 px-4 py-3 text-xs font-medium bg-bg-card/80 backdrop-blur border border-border rounded-xl text-text-secondary hover:text-alert-red hover:border-alert-red/30 transition-all"
       >
         {locale === "he" ? "🧪 הדגמה: איפה היית?" : "🧪 Demo: Where Were You?"}
       </button>

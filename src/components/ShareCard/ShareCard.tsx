@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { useApp } from "@/lib/context";
 import { type ProcessedAlert, getCategoryInfo } from "@/lib/oref";
@@ -12,6 +13,7 @@ interface ShareCardProps {
 
 export default function ShareCard({ alert, onShare }: ShareCardProps) {
   const { locale, t } = useApp();
+  const [copied, setCopied] = useState(false);
   const catInfo = getCategoryInfo(alert.category);
   const city = cities[alert.cities[0]];
   const time = new Date(alert.timestamp).toLocaleTimeString(locale === "he" ? "he-IL" : "en-US", {
@@ -34,6 +36,8 @@ export default function ShareCard({ alert, onShare }: ShareCardProps) {
       }
     } else {
       await navigator.clipboard.writeText(`${text}\n${window.location.href}`);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
     }
     onShare?.();
   };
@@ -42,7 +46,7 @@ export default function ShareCard({ alert, onShare }: ShareCardProps) {
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-gradient-to-br from-bg-card to-bg border border-border rounded-2xl p-6 relative overflow-hidden"
+      className="bg-gradient-to-br from-bg-card to-bg border border-border rounded-2xl p-6 relative overflow-hidden hover:border-alert-red/20 transition-colors"
     >
       <div className="absolute top-0 left-0 w-full h-1" style={{ background: catInfo.color }} />
 
@@ -69,9 +73,15 @@ export default function ShareCard({ alert, onShare }: ShareCardProps) {
         <span className="text-[10px] text-text-secondary font-mono">LIONFURY.LIVE</span>
         <button
           onClick={handleShare}
-          className="px-4 py-1.5 text-xs font-medium bg-text-primary/10 text-text-primary rounded-full hover:bg-text-primary/20 transition-colors"
+          className={`px-5 py-2.5 text-xs font-medium rounded-full transition-colors ${
+            copied
+              ? "bg-alert-safe/15 text-alert-safe"
+              : "bg-text-primary/10 text-text-primary hover:bg-text-primary/20"
+          }`}
         >
-          {t.common.share}
+          {copied
+            ? locale === "he" ? "הועתק!" : "Copied!"
+            : t.common.share}
         </button>
       </div>
     </motion.div>

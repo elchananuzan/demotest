@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useApp } from "@/lib/context";
 import { WHERE_WERE_YOU_OPTIONS } from "@/lib/oref";
@@ -16,6 +16,7 @@ export default function WhereWereYouModal({ alertId, isOpen, onClose }: WhereWer
   const { locale, t } = useApp();
   const [submitted, setSubmitted] = useState(false);
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
+  const modalRef = useRef<HTMLDivElement>(null);
 
   const handleSelect = async (key: string) => {
     setSelectedOption(key);
@@ -25,8 +26,25 @@ export default function WhereWereYouModal({ alertId, isOpen, onClose }: WhereWer
       // Continue even if submission fails
     }
     setSubmitted(true);
-    setTimeout(onClose, 2000);
+    setTimeout(onClose, 3000);
   };
+
+  // Escape key handler
+  const handleKeyDown = useCallback(
+    (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    },
+    [onClose]
+  );
+
+  useEffect(() => {
+    if (isOpen) {
+      document.addEventListener("keydown", handleKeyDown);
+      // Focus the modal when it opens
+      modalRef.current?.focus();
+      return () => document.removeEventListener("keydown", handleKeyDown);
+    }
+  }, [isOpen, handleKeyDown]);
 
   return (
     <AnimatePresence>
@@ -37,13 +55,18 @@ export default function WhereWereYouModal({ alertId, isOpen, onClose }: WhereWer
           exit={{ opacity: 0 }}
           className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-xl p-4"
           onClick={onClose}
+          role="dialog"
+          aria-modal="true"
+          aria-label={t.whereWereYou.title}
         >
           <motion.div
+            ref={modalRef}
+            tabIndex={-1}
             initial={{ scale: 0.9, y: 20 }}
             animate={{ scale: 1, y: 0 }}
             exit={{ scale: 0.9, y: 20 }}
             onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-lg bg-bg-card border border-border rounded-3xl p-8 relative overflow-hidden"
+            className="w-full max-w-lg bg-bg-card border border-border rounded-3xl p-6 sm:p-8 relative overflow-hidden outline-none max-h-[90vh] overflow-y-auto"
           >
             {/* Subtle glow */}
             <div className="absolute -top-20 left-1/2 -translate-x-1/2 w-60 h-60 rounded-full bg-alert-red/5 blur-3xl pointer-events-none" />
@@ -66,7 +89,7 @@ export default function WhereWereYouModal({ alertId, isOpen, onClose }: WhereWer
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
                       onClick={() => handleSelect(option.key)}
-                      className={`flex items-center gap-3 p-4 rounded-2xl bg-bg border border-border hover:border-alert-red/30 hover:glow-red transition-all ${
+                      className={`flex items-center gap-3 p-4 rounded-2xl bg-bg border border-border hover:border-alert-red/30 hover:glow-red transition-all focus-visible:outline-2 focus-visible:outline-alert-red focus-visible:outline-offset-2 ${
                         selectedOption === option.key ? "border-alert-red glow-red" : ""
                       }`}
                     >
@@ -80,7 +103,7 @@ export default function WhereWereYouModal({ alertId, isOpen, onClose }: WhereWer
 
                 <button
                   onClick={onClose}
-                  className="mt-6 w-full text-center text-text-secondary text-xs hover:text-text-primary transition-colors"
+                  className="mt-6 w-full text-center text-text-secondary text-xs hover:text-text-primary transition-colors py-2"
                 >
                   {locale === "he" ? "לא עכשיו" : "Not now"}
                 </button>

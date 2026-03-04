@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { AppProvider } from "@/lib/context";
 import Navbar from "@/components/Navigation/Navbar";
+import DocumentDirection from "@/components/DocumentDirection";
 
 export const metadata: Metadata = {
   title: "LionFury — Real-Time Israel Defense Intelligence",
@@ -29,7 +30,6 @@ export const viewport: Viewport = {
   themeColor: "#0a0a0f",
   width: "device-width",
   initialScale: 1,
-  maximumScale: 1,
 };
 
 export default function RootLayout({
@@ -44,6 +44,7 @@ export default function RootLayout({
       </head>
       <body className="bg-bg text-text-primary font-sans antialiased">
         <AppProvider>
+          <DocumentDirection />
           <Navbar />
           <main className="pt-14">{children}</main>
         </AppProvider>

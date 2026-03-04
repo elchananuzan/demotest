@@ -83,17 +83,19 @@ export default function StoriesPage() {
             </h2>
 
             {/* Sleeping figures animation */}
-            <div className="flex items-center justify-center gap-1 my-8">
-              {Array.from({ length: 20 }).map((_, i) => (
+            <div className="flex items-center justify-center gap-1.5 my-8">
+              {Array.from({ length: 10 }).map((_, i) => (
                 <motion.div
                   key={i}
-                  initial={{ opacity: 0.3, y: 0 }}
-                  animate={{ opacity: 1, y: [-2, 0, -2] }}
+                  initial={{ opacity: 0.3 }}
+                  animate={{ opacity: [0.4, 1, 0.4] }}
                   transition={{
-                    delay: i * 0.05,
-                    y: { repeat: Infinity, duration: 2, delay: i * 0.1 },
+                    delay: i * 0.1,
+                    duration: 3,
+                    repeat: Infinity,
+                    ease: "easeInOut",
                   }}
-                  className="text-lg"
+                  className="text-xl"
                 >
                   {topActivity.emoji}
                 </motion.div>

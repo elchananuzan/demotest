@@ -29,6 +29,9 @@ export default function Navbar() {
             <span className="text-lg font-bold text-text-primary tracking-tight">
               {locale === "he" ? "זעם האריה" : "LionFury"}
             </span>
+            <span className="px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider bg-alert-warning/15 text-alert-warning border border-alert-warning/30 rounded">
+              Demo
+            </span>
           </Link>
 
           {/* Nav Links */}
@@ -39,7 +42,7 @@ export default function Navbar() {
                 <Link
                   key={item.href}
                   href={item.href}
-                  className="relative px-3 py-1.5 text-xs font-medium uppercase tracking-wider transition-colors"
+                  className="relative px-3 py-2.5 text-xs font-medium uppercase tracking-wider transition-colors"
                 >
                   <span className={isActive ? "text-text-primary" : "text-text-secondary hover:text-text-primary"}>
                     {t.nav[item.key]}
@@ -73,7 +76,7 @@ export default function Navbar() {
             {/* Language toggle */}
             <button
               onClick={() => setLocale(locale === "en" ? "he" : "en")}
-              className="w-8 h-8 flex items-center justify-center rounded-lg bg-bg-card border border-border text-xs font-bold text-text-secondary hover:text-text-primary transition-colors"
+              className="w-10 h-10 flex items-center justify-center rounded-lg bg-bg-card border border-border text-xs font-bold text-text-secondary hover:text-text-primary transition-colors"
             >
               {locale === "en" ? "עב" : "EN"}
             </button>
@@ -88,7 +91,7 @@ export default function Navbar() {
               <Link
                 key={item.href}
                 href={item.href}
-                className={`shrink-0 px-3 py-1 text-[10px] font-medium uppercase tracking-wider rounded-full transition-colors ${
+                className={`shrink-0 px-4 py-2 text-[11px] font-medium uppercase tracking-wider rounded-full transition-colors ${
                   isActive
                     ? "bg-alert-red/10 text-alert-red border border-alert-red/20"
                     : "text-text-secondary"

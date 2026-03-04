@@ -20,6 +20,7 @@ export default function TimelinePage() {
   const { alerts } = useAlerts();
   const [regionFilter, setRegionFilter] = useState("all");
   const [categoryFilter, setCategoryFilter] = useState<number | null>(null);
+  const [exportFeedback, setExportFeedback] = useState(false);
 
   const filteredAlerts = useMemo(() => {
     return alerts.filter((alert) => {
@@ -54,6 +55,8 @@ export default function TimelinePage() {
     a.download = `lionfury-alerts-${new Date().toISOString().split("T")[0]}.csv`;
     a.click();
     URL.revokeObjectURL(url);
+    setExportFeedback(true);
+    setTimeout(() => setExportFeedback(false), 2000);
   };
 
   return (
@@ -71,9 +74,15 @@ export default function TimelinePage() {
           </div>
           <button
             onClick={exportCsv}
-            className="shrink-0 px-4 py-2 text-xs font-medium bg-bg-card border border-border rounded-xl text-text-secondary hover:text-text-primary hover:border-alert-red/20 transition-all"
+            className={`shrink-0 px-4 py-2 text-xs font-medium border rounded-xl transition-all ${
+              exportFeedback
+                ? "bg-alert-safe/10 border-alert-safe/30 text-alert-safe"
+                : "bg-bg-card border-border text-text-secondary hover:text-text-primary hover:border-alert-red/20"
+            }`}
           >
-            {t.timeline.exportCsv}
+            {exportFeedback
+              ? locale === "he" ? "הורד!" : "Downloaded!"
+              : t.timeline.exportCsv}
           </button>
         </motion.div>
 
@@ -84,7 +93,7 @@ export default function TimelinePage() {
             <button
               key={r.key}
               onClick={() => setRegionFilter(r.key)}
-              className={`px-3 py-1.5 text-xs rounded-full border transition-all ${
+              className={`px-4 py-2 text-xs rounded-full border transition-all ${
                 regionFilter === r.key
                   ? "bg-alert-red/10 border-alert-red/30 text-alert-red"
                   : "bg-bg-card border-border text-text-secondary hover:text-text-primary"
@@ -99,7 +108,7 @@ export default function TimelinePage() {
           {/* Category filter */}
           <button
             onClick={() => setCategoryFilter(null)}
-            className={`px-3 py-1.5 text-xs rounded-full border transition-all ${
+            className={`px-4 py-2 text-xs rounded-full border transition-all ${
               categoryFilter === null
                 ? "bg-alert-red/10 border-alert-red/30 text-alert-red"
                 : "bg-bg-card border-border text-text-secondary hover:text-text-primary"
@@ -111,7 +120,7 @@ export default function TimelinePage() {
             <button
               key={cat}
               onClick={() => setCategoryFilter(parseInt(cat))}
-              className={`px-3 py-1.5 text-xs rounded-full border transition-all ${
+              className={`px-4 py-2 text-xs rounded-full border transition-all ${
                 categoryFilter === parseInt(cat)
                   ? "bg-alert-red/10 border-alert-red/30 text-alert-red"
                   : "bg-bg-card border-border text-text-secondary hover:text-text-primary"

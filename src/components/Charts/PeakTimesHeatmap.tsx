@@ -32,7 +32,7 @@ export default function PeakTimesHeatmap({ alerts }: PeakTimesHeatmapProps) {
       <h3 className="text-sm font-medium text-text-primary mb-4">{t.stats.peakTimes}</h3>
 
       <div className="overflow-x-auto">
-        <div className="min-w-[500px]">
+        <div className="min-w-[360px] sm:min-w-[500px]">
           {/* Hour labels */}
           <div className="flex gap-[2px] mb-1 ml-8">
             {Array.from({ length: 24 }).map((_, h) => (

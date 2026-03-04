@@ -18,7 +18,7 @@
   --alert-warning: #ff6600;
   --alert-safe: #00ff88;
   --text-primary: #e8e8e8;
-  --text-secondary: #888899;
+  --text-secondary: #9999aa;
 }
 
 html {
@@ -47,6 +47,18 @@ body {
 }
 ::-webkit-scrollbar-thumb:hover {
   background: var(--text-secondary);
+}
+
+/* Firefox scrollbar */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) var(--bg);
+}
+
+/* Focus visible — global keyboard focus indicator */
+:focus-visible {
+  outline: 2px solid var(--alert-red);
+  outline-offset: 2px;
 }
 
 /* RTL Support */
@@ -91,4 +103,17 @@ body {
 }
 .alert-pulse-ring {
   animation: alert-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Reduced motion: disable all animations for users who prefer it */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .alert-pulse-ring {
+    animation: none;
+  }
 }
