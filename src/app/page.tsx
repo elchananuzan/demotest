@@ -114,6 +114,14 @@ export default function LivePage() {
         </div>
       </div>
 
+      {/* Demo: trigger Where Were You */}
+      <button
+        onClick={() => setShowWhereWereYou(true)}
+        className="fixed bottom-36 sm:bottom-28 right-4 z-40 px-3 py-2 text-[10px] font-medium bg-bg-card/80 backdrop-blur border border-border rounded-xl text-text-secondary hover:text-alert-red hover:border-alert-red/30 transition-all"
+      >
+        {locale === "he" ? "🧪 הדגמה: איפה היית?" : "🧪 Demo: Where Were You?"}
+      </button>
+
       {/* Loading skeleton */}
       {isLoading && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-bg">
