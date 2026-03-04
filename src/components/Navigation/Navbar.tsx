@@ -30,9 +30,11 @@ export default function Navbar() {
             <span className="text-lg font-bold text-text-primary tracking-tight">
               {locale === "he" ? "זעם האריה" : "LionFury"}
             </span>
-            <span className="px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider bg-alert-warning/15 text-alert-warning border border-alert-warning/30 rounded">
-              Demo
-            </span>
+            {process.env.NEXT_PUBLIC_DEMO_MODE === "true" && (
+              <span className="px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider bg-alert-warning/15 text-alert-warning border border-alert-warning/30 rounded">
+                Demo
+              </span>
+            )}
           </Link>
 
           {/* Nav Links */}

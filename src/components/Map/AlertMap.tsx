@@ -33,12 +33,13 @@ export default function AlertMap({ alerts, activeAlerts }: AlertMapProps) {
   const mapRef = useRef<mapboxgl.Map | null>(null);
 
   const ISRAEL_CENTER: [number, number] = [34.85, 31.5];
+  const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
+  const hasValidToken = token && token.startsWith("pk.") && token.length > 30;
 
   useEffect(() => {
     if (!mapContainer.current || mapRef.current) return;
 
-    const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
-    if (!token) {
+    if (!hasValidToken) {
       setMapLoaded(true);
       return;
     }
@@ -85,7 +86,7 @@ export default function AlertMap({ alerts, activeAlerts }: AlertMapProps) {
       <div ref={mapContainer} className="absolute inset-0 bg-bg" />
 
       {/* SVG fallback map */}
-      {!process.env.NEXT_PUBLIC_MAPBOX_TOKEN && (
+      {!hasValidToken && (
         <div className="absolute inset-0 bg-bg">
           <SVGMap alerts={alerts} activeAlerts={activeAlerts} locale={locale} />
         </div>
@@ -134,7 +135,7 @@ export default function AlertMap({ alerts, activeAlerts }: AlertMapProps) {
       </AnimatePresence>
 
       {/* Alert dots overlay on Mapbox */}
-      {process.env.NEXT_PUBLIC_MAPBOX_TOKEN && (
+      {hasValidToken && (
         <div className="absolute inset-0 pointer-events-none">
           {alerts.slice(0, 20).map((alert, i) => {
             const city = cities[alert.cities[0]];
