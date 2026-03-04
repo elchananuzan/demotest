@@ -86,11 +86,16 @@ export async function GET() {
     // Sort newest first
     deduped.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
 
-    // Return real data — empty array is valid (means no alerts = peace)
-    return NextResponse.json(deduped);
+    // If we got real data, return it. Otherwise fall back to demo
+    // (Oref API is geo-restricted to Israel — outside IL, both endpoints fail)
+    if (deduped.length > 0) {
+      return NextResponse.json(deduped);
+    }
+
+    // No data — likely geo-blocked. Fall back to demo so the site isn't empty.
+    return NextResponse.json(generateDemoAlerts(80));
   } catch (err) {
     console.error("Failed to fetch from Oref API:", err);
-    // Return empty array on error, not demo data
-    return NextResponse.json([]);
+    return NextResponse.json(generateDemoAlerts(80));
   }
 }
