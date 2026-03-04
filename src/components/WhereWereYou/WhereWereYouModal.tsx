@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useApp } from "@/lib/context";
 import { WHERE_WERE_YOU_OPTIONS } from "@/lib/oref";
 import { submitWhereWereYou } from "@/lib/supabase";
+import { ACTIVITY_ICONS, IconThanks } from "@/components/Icons";
 
 interface WhereWereYouModalProps {
   alertId: string;
@@ -93,7 +94,7 @@ export default function WhereWereYouModal({ alertId, isOpen, onClose }: WhereWer
                         selectedOption === option.key ? "border-alert-red glow-red" : ""
                       }`}
                     >
-                      <span className="text-2xl">{option.emoji}</span>
+                      <span className="text-text-secondary">{(() => { const Icon = ACTIVITY_ICONS[option.key]; return Icon ? <Icon size={24} /> : null; })()}</span>
                       <span className="text-sm font-medium text-text-primary">
                         {locale === "he" ? option.he : option.en}
                       </span>
@@ -114,7 +115,7 @@ export default function WhereWereYouModal({ alertId, isOpen, onClose }: WhereWer
                 animate={{ opacity: 1, y: 0 }}
                 className="text-center py-8"
               >
-                <div className="text-4xl mb-4">🙏</div>
+                <div className="flex justify-center mb-4"><IconThanks size={40} className="text-alert-red" /></div>
                 <h3 className="text-xl font-bold text-text-primary">
                   {t.whereWereYou.thanks}
                 </h3>

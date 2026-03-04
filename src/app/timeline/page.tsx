@@ -1,11 +1,12 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useApp } from "@/lib/context";
 import { useAlerts } from "@/lib/hooks";
 import { getCategoryInfo, ALERT_CATEGORIES } from "@/lib/oref";
 import { cities } from "@/lib/cities";
+import { CATEGORY_ICONS, IconSearch } from "@/components/Icons";
 
 const REGIONS = [
   { key: "all", en: "All Regions", he: "כל האזורים" },
@@ -21,6 +22,7 @@ export default function TimelinePage() {
   const [regionFilter, setRegionFilter] = useState("all");
   const [categoryFilter, setCategoryFilter] = useState<number | null>(null);
   const [exportFeedback, setExportFeedback] = useState(false);
+  const [visibleCount, setVisibleCount] = useState(20);
 
   const filteredAlerts = useMemo(() => {
     return alerts.filter((alert) => {
@@ -32,6 +34,14 @@ export default function TimelinePage() {
       return true;
     });
   }, [alerts, regionFilter, categoryFilter]);
+
+  // Reset pagination when filters change
+  useEffect(() => {
+    setVisibleCount(20);
+  }, [regionFilter, categoryFilter]);
+
+  const visibleAlerts = filteredAlerts.slice(0, visibleCount);
+  const hasMore = visibleCount < filteredAlerts.length;
 
   const isMajorBarrage = (alert: typeof alerts[0]) => alert.cities.length >= 5;
 
@@ -126,7 +136,8 @@ export default function TimelinePage() {
                   : "bg-bg-card border-border text-text-secondary hover:text-text-primary"
               }`}
             >
-              {info.icon} {locale === "he" ? info.he : info.en}
+              {(() => { const Icon = CATEGORY_ICONS[parseInt(cat)]; return Icon ? <Icon size={12} className="inline-block me-1" /> : null; })()}
+              {locale === "he" ? info.he : info.en}
             </button>
           ))}
         </div>
@@ -139,7 +150,7 @@ export default function TimelinePage() {
         {/* Timeline */}
         <div className="space-y-3">
           <AnimatePresence mode="popLayout">
-            {filteredAlerts.map((alert, i) => {
+            {visibleAlerts.map((alert, i) => {
               const catInfo = getCategoryInfo(alert.category);
               const time = new Date(alert.timestamp).toLocaleTimeString(
                 locale === "he" ? "he-IL" : "en-US",
@@ -204,7 +215,8 @@ export default function TimelinePage() {
                         color: catInfo.color,
                       }}
                     >
-                      {catInfo.icon} {locale === "he" ? catInfo.he : catInfo.en}
+                      {(() => { const Icon = CATEGORY_ICONS[alert.category]; return Icon ? <Icon size={12} className="inline-block me-1" /> : null; })()}
+                      {locale === "he" ? catInfo.he : catInfo.en}
                     </div>
                   </div>
                 </motion.div>
@@ -213,9 +225,26 @@ export default function TimelinePage() {
           </AnimatePresence>
         </div>
 
+        {hasMore && (
+          <div className="text-center mt-6">
+            <button
+              onClick={() => setVisibleCount((c) => c + 20)}
+              className="px-6 py-2.5 text-xs font-medium bg-bg-card border border-border rounded-xl text-text-secondary hover:text-text-primary hover:border-alert-red/20 transition-all"
+            >
+              {locale === "he" ? `טען עוד (${filteredAlerts.length - visibleCount} נותרו)` : `Load more (${filteredAlerts.length - visibleCount} remaining)`}
+            </button>
+          </div>
+        )}
+
         {filteredAlerts.length === 0 && (
-          <div className="text-center py-20 text-text-secondary">
-            {locale === "he" ? "אין התרעות מתאימות" : "No matching alerts"}
+          <div className="text-center py-20">
+            <div className="flex justify-center mb-4"><IconSearch size={48} className="text-text-secondary" /></div>
+            <p className="text-text-secondary text-lg">
+              {locale === "he" ? "אין התרעות מתאימות" : "No matching alerts"}
+            </p>
+            <p className="text-text-secondary text-sm mt-2">
+              {locale === "he" ? "נסה לשנות את המסננים" : "Try adjusting the filters"}
+            </p>
           </div>
         )}
       </div>

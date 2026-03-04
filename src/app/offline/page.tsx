@@ -1,10 +1,12 @@
 "use client";
 
+import { ShieldLogo } from "@/components/Icons";
+
 export default function OfflinePage() {
   return (
     <div className="min-h-screen bg-bg flex items-center justify-center p-4">
       <div className="text-center max-w-md">
-        <div className="text-6xl mb-6">🦁</div>
+        <div className="mb-6 flex justify-center"><ShieldLogo size={64} className="text-alert-red" /></div>
         <h1 className="text-3xl font-bold text-text-primary mb-3">You&apos;re Offline</h1>
         <p className="text-text-secondary mb-4">
           LionFury needs an internet connection to show live alerts.
@@ -12,7 +14,7 @@ export default function OfflinePage() {
         </p>
         <div className="bg-bg-card border border-border rounded-xl p-4 mb-6 text-sm text-text-secondary">
           <p className="mb-2">While offline you can:</p>
-          <ul className="text-left space-y-1">
+          <ul className="text-start space-y-1">
             <li>- View cached pages if previously visited</li>
             <li>- Access the app from your home screen</li>
           </ul>

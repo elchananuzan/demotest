@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { useApp } from "@/lib/context";
 import { type ProcessedAlert, getCategoryInfo } from "@/lib/oref";
 import { cities } from "@/lib/cities";
+import { CATEGORY_ICONS } from "@/components/Icons";
 
 interface ShareCardProps {
   alert: ProcessedAlert;
@@ -51,8 +52,9 @@ export default function ShareCard({ alert, onShare }: ShareCardProps) {
       <div className="absolute top-0 left-0 w-full h-1" style={{ background: catInfo.color }} />
 
       <div className="mb-4">
-        <span className="text-xs text-text-secondary uppercase tracking-wider">
-          {catInfo.icon} {locale === "he" ? catInfo.he : catInfo.en}
+        <span className="text-xs text-text-secondary uppercase tracking-wider flex items-center gap-1.5">
+          {(() => { const Icon = CATEGORY_ICONS[alert.category]; return Icon ? <Icon size={14} style={{ color: catInfo.color }} /> : null; })()}
+          {locale === "he" ? catInfo.he : catInfo.en}
         </span>
       </div>
 

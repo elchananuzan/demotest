@@ -25,6 +25,10 @@ export async function POST(request: Request) {
       );
     }
 
+    if (!supabase) {
+      return NextResponse.json({ success: true }); // graceful no-op in demo mode
+    }
+
     const { error } = await supabase
       .from("where_were_you")
       .insert({ alert_id, activity, count: 1 });
@@ -42,6 +46,10 @@ export async function POST(request: Request) {
 
 export async function GET(request: Request) {
   try {
+    if (!supabase) {
+      return NextResponse.json({ stats: {}, total: 0 });
+    }
+
     const { searchParams } = new URL(request.url);
     const alertId = searchParams.get("alert_id");
 

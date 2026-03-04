@@ -1,9 +1,17 @@
 import { createClient } from "@supabase/supabase-js";
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://placeholder.supabase.co";
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "placeholder-key";
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+export const isSupabaseConfigured =
+  supabaseUrl.length > 0 &&
+  supabaseAnonKey.length > 0 &&
+  !supabaseUrl.includes("placeholder") &&
+  !supabaseUrl.includes("your-project");
+
+export const supabase = isSupabaseConfigured
+  ? createClient(supabaseUrl, supabaseAnonKey)
+  : null;
 
 // Database types
 export interface AlertRecord {
@@ -86,8 +94,9 @@ CREATE POLICY "Push subs insertable by everyone" ON push_subscriptions FOR INSER
 CREATE POLICY "Push subs deletable by owner" ON push_subscriptions FOR DELETE USING (true);
 `;
 
-// Helper functions
+// Helper functions — all gracefully return empty data when Supabase is not configured
 export async function getAlerts(limit = 100) {
+  if (!supabase) return [];
   const { data, error } = await supabase
     .from("alerts")
     .select("*")
@@ -98,6 +107,7 @@ export async function getAlerts(limit = 100) {
 }
 
 export async function getAlertsToday() {
+  if (!supabase) return [];
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const { data, error } = await supabase
@@ -110,6 +120,7 @@ export async function getAlertsToday() {
 }
 
 export async function getAlerts24h() {
+  if (!supabase) return [];
   const since = new Date(Date.now() - 24 * 60 * 60 * 1000);
   const { data, error } = await supabase
     .from("alerts")
@@ -121,12 +132,14 @@ export async function getAlerts24h() {
 }
 
 export async function insertAlert(alert: Omit<AlertRecord, "created_at">) {
+  if (!supabase) throw new Error("Supabase is not configured");
   const { data, error } = await supabase.from("alerts").upsert(alert);
   if (error) throw error;
   return data;
 }
 
 export async function submitWhereWereYou(alertId: string, activity: string) {
+  if (!supabase) throw new Error("Supabase is not configured");
   const { data, error } = await supabase
     .from("where_were_you")
     .insert({ alert_id: alertId, activity, count: 1 });
@@ -135,6 +148,7 @@ export async function submitWhereWereYou(alertId: string, activity: string) {
 }
 
 export async function getWhereWereYouStats(alertId: string) {
+  if (!supabase) return {};
   const { data, error } = await supabase
     .from("where_were_you")
     .select("activity, count")
@@ -149,6 +163,7 @@ export async function getWhereWereYouStats(alertId: string) {
 }
 
 export async function getWhereWereYouAggregated() {
+  if (!supabase) return { stats: {}, total: 0 };
   const { data, error } = await supabase
     .from("where_were_you")
     .select("activity, count");
@@ -164,6 +179,7 @@ export async function getWhereWereYouAggregated() {
 }
 
 export async function savePushSubscription(subscription: PushSubscriptionJSON) {
+  if (!supabase) throw new Error("Supabase is not configured");
   const { error } = await supabase.from("push_subscriptions").upsert({
     endpoint: subscription.endpoint,
     keys: subscription.keys,

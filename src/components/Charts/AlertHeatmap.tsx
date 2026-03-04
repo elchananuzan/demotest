@@ -1,7 +1,7 @@
 "use client";
 
-import { useMemo } from "react";
-import { motion } from "framer-motion";
+import { useMemo, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { useApp } from "@/lib/context";
 import { type ProcessedAlert } from "@/lib/oref";
 
@@ -11,6 +11,7 @@ interface AlertHeatmapProps {
 
 export default function AlertHeatmap({ alerts }: AlertHeatmapProps) {
   const { t } = useApp();
+  const [tooltip, setTooltip] = useState<{ date: string; count: number } | null>(null);
 
   const heatmapData = useMemo(() => {
     // Generate 365 days of data
@@ -42,6 +43,22 @@ export default function AlertHeatmap({ alerts }: AlertHeatmapProps) {
     <div className="bg-bg-card border border-border rounded-2xl p-6">
       <h3 className="text-sm font-medium text-text-primary mb-4">{t.stats.heatmap}</h3>
 
+      {/* Mobile touch tooltip */}
+      <AnimatePresence>
+        {tooltip && (
+          <motion.div
+            initial={{ opacity: 0, y: -4 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0 }}
+            className="mb-2 px-3 py-1.5 bg-bg border border-border rounded-lg text-xs text-text-primary inline-block"
+          >
+            <span className="font-mono">{tooltip.date}</span>
+            <span className="text-text-secondary mx-1.5">—</span>
+            <span className="text-alert-red font-medium">{tooltip.count}</span> alerts
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <div className="overflow-x-auto pb-2 -mx-2 px-2">
         <div className="flex gap-[2px] sm:gap-[3px]" style={{ minWidth: `${weeks * 13}px` }}>
           {Array.from({ length: weeks }).map((_, weekIdx) => (
@@ -60,6 +77,7 @@ export default function AlertHeatmap({ alerts }: AlertHeatmapProps) {
                     className="w-[11px] h-[11px] rounded-[2px] cursor-pointer hover:ring-1 hover:ring-text-secondary transition-all"
                     style={{ backgroundColor: colors[day.level] }}
                     title={`${day.date}: ${day.count} alerts`}
+                    onClick={() => setTooltip(tooltip?.date === day.date ? null : { date: day.date, count: day.count })}
                   />
                 );
               })}

@@ -28,6 +28,10 @@ export async function POST(request: Request) {
       );
     }
 
+    if (!supabase) {
+      return NextResponse.json({ error: "Database not configured" }, { status: 503 });
+    }
+
     // Fetch all push subscriptions
     const { data: subscriptions } = await supabase
       .from("push_subscriptions")

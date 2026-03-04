@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { useApp } from "@/lib/context";
 import { useAnimatedNumber } from "@/lib/hooks";
 import { WHERE_WERE_YOU_OPTIONS } from "@/lib/oref";
+import { ACTIVITY_ICONS } from "@/components/Icons";
 
 interface WhereWereYouResultsProps {
   stats: Record<string, number>;
@@ -34,9 +35,11 @@ export default function WhereWereYouResults({
   if (compact) {
     return (
       <div className="space-y-2">
-        {sortedActivities.slice(0, 4).map((activity) => (
+        {sortedActivities.slice(0, 4).map((activity) => {
+            const Icon = ACTIVITY_ICONS[activity.key];
+            return (
           <div key={activity.key} className="flex items-center gap-2 text-sm">
-            <span>{activity.emoji}</span>
+            <span className="text-text-secondary">{Icon && <Icon size={16} />}</span>
             <div className="flex-1 h-1.5 bg-border rounded-full overflow-hidden">
               <motion.div
                 initial={{ width: 0 }}
@@ -45,11 +48,12 @@ export default function WhereWereYouResults({
                 className="h-full bg-alert-red/70 rounded-full"
               />
             </div>
-            <span className="font-mono text-xs text-text-secondary w-10 text-right">
+            <span className="font-mono text-xs text-text-secondary w-10 text-end">
               {Math.round(activity.percentage)}%
             </span>
           </div>
-        ))}
+            );
+          })}
       </div>
     );
   }
@@ -70,7 +74,7 @@ export default function WhereWereYouResults({
             </p>
           )}
           <div className="flex items-center justify-center gap-3 mb-1">
-            <span className="text-4xl">{topActivity.emoji}</span>
+            <span className="text-text-secondary">{(() => { const Icon = ACTIVITY_ICONS[topActivity.key]; return Icon ? <Icon size={36} /> : null; })()}</span>
             <span className="font-mono text-4xl font-bold text-text-primary">
               {animatedTotal.toLocaleString()}
             </span>
@@ -95,7 +99,7 @@ export default function WhereWereYouResults({
             transition={{ delay: i * 0.1 }}
             className="flex items-center gap-3"
           >
-            <span className="text-xl">{activity.emoji}</span>
+            <span className="text-text-secondary">{(() => { const Icon = ACTIVITY_ICONS[activity.key]; return Icon ? <Icon size={20} /> : null; })()}</span>
             <div className="flex-1">
               <div className="flex justify-between mb-1">
                 <span className="text-sm text-text-primary">

@@ -2,10 +2,10 @@ import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Statistics — LionFury",
-  description: "Attack data and statistics since October 7, 2023. Alerts by category, targeted cities, and intensity patterns.",
+  description: "Real-time attack data and statistics. Alerts by category, targeted cities, and intensity patterns.",
   openGraph: {
     title: "Statistics — LionFury",
-    description: "Attack data and statistics since October 7, 2023.",
+    description: "Real-time attack data and statistics for the current conflict.",
   },
 };
 

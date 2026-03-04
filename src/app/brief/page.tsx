@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
 import { useApp } from "@/lib/context";
 import { useAlerts } from "@/lib/hooks";
+import { IconSearch, IconWarning, IconTrendUp, IconAI } from "@/components/Icons";
 
 interface BriefSection {
   title: string;
@@ -90,10 +91,10 @@ export default function BriefPage() {
     return `${m}:${String(sec).padStart(2, "0")}`;
   };
 
-  const typeIcons: Record<string, string> = {
-    pattern: "🔍",
-    anomaly: "⚠️",
-    trend: "📈",
+  const typeIcons: Record<string, React.ReactNode> = {
+    pattern: <IconSearch size={18} />,
+    anomaly: <IconWarning size={18} />,
+    trend: <IconTrendUp size={18} />,
   };
 
   const typeColors: Record<string, string> = {
@@ -137,7 +138,7 @@ export default function BriefPage() {
           transition={{ delay: 0.2 }}
           className="bg-bg-card border border-border rounded-xl p-3 mb-8 flex items-center gap-2"
         >
-          <span className="text-sm">🤖</span>
+          <IconAI size={16} className="shrink-0 text-text-secondary" />
           <span className="text-xs text-text-secondary">
             {locale === "he"
               ? "תדריך זה נוצר באמצעות Claude AI על בסיס ניתוח דפוסי התרעות. לא מהווה מידע ביטחוני רשמי."
@@ -156,12 +157,12 @@ export default function BriefPage() {
               className="bg-bg-card border border-border rounded-2xl p-6 relative overflow-hidden hover:border-alert-red/10 transition-colors"
             >
               <div
-                className="absolute top-0 left-0 w-1 h-full rounded-r"
+                className="absolute top-0 start-0 w-1 h-full rounded-e"
                 style={{ backgroundColor: typeColors[section.type] }}
               />
 
               <div className="flex items-center gap-2 mb-3">
-                <span className="text-lg">{typeIcons[section.type]}</span>
+                <span style={{ color: typeColors[section.type] }}>{typeIcons[section.type]}</span>
                 <h3 className="font-bold text-text-primary">{section.title}</h3>
               </div>
 

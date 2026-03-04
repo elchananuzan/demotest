@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { useApp } from "@/lib/context";
 import { type ProcessedAlert, getCategoryInfo } from "@/lib/oref";
 import { cities } from "@/lib/cities";
+import { CATEGORY_ICONS } from "@/components/Icons";
 
 interface AlertTickerProps {
   alerts: ProcessedAlert[];
@@ -50,9 +51,11 @@ export default function AlertTicker({ alerts }: AlertTickerProps) {
             })
             .join(", ");
 
+          const CatIcon = CATEGORY_ICONS[alert.category];
+
           return (
             <span key={`${alert.id}-${i}`} className="flex items-center gap-2 text-sm">
-              <span>{catInfo.icon}</span>
+              <span style={{ color: catInfo.color }}>{CatIcon && <CatIcon size={14} />}</span>
               <span className="text-text-secondary">{time}</span>
               <span className="text-text-primary font-medium">{cityNames}</span>
               <span className="text-text-secondary">·</span>

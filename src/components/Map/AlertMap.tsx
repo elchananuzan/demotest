@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useApp } from "@/lib/context";
 import { type ProcessedAlert, getCategoryInfo } from "@/lib/oref";
 import { cities, threatOrigins } from "@/lib/cities";
+import { ShieldLogo } from "@/components/Icons";
 
 interface AlertMapProps {
   alerts: ProcessedAlert[];
@@ -115,7 +116,7 @@ export default function AlertMap({ alerts, activeAlerts }: AlertMapProps) {
                     className="bg-alert-red/95 backdrop-blur-xl rounded-2xl px-8 py-6 text-center glow-red-intense mb-4"
                   >
                     <div className="text-white/80 text-xs uppercase tracking-widest mb-2">
-                      {catInfo.icon} {locale === "he" ? catInfo.he : catInfo.en} • {locale === "he" ? `מ${origin.label_he}` : `from ${origin.label_en}`}
+                      {locale === "he" ? catInfo.he : catInfo.en} • {locale === "he" ? `מ${origin.label_he}` : `from ${origin.label_en}`}
                     </div>
                     <div className="text-white text-2xl font-bold mb-2">
                       {alert.cities.map((c) => {
@@ -180,7 +181,7 @@ function ShelterCountdown({ seconds, locale }: { seconds: number; locale: string
   if (remaining === 0) {
     return (
       <div className="flex items-center justify-center gap-2">
-        <span className="text-2xl">🛡️</span>
+        <ShieldLogo size={24} className="text-white" />
         <span className="font-bold text-lg text-white">
           {locale === "he" ? "הישארו במיגון!" : "Stay in shelter!"}
         </span>

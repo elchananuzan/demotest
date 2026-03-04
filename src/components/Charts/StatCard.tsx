@@ -1,15 +1,18 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { motion } from "framer-motion";
 import { useAnimatedNumber } from "@/lib/hooks";
+import { TrendingUp, TrendingDown } from "lucide-react";
 
 interface StatCardProps {
   label: string;
   value: number;
   suffix?: string;
-  icon?: string;
+  icon?: ReactNode;
   color?: string;
   delay?: number;
+  trend?: { value: number; direction: "up" | "down" | "flat" };
 }
 
 export default function StatCard({
@@ -19,6 +22,7 @@ export default function StatCard({
   icon,
   color = "#ff3333",
   delay = 0,
+  trend,
 }: StatCardProps) {
   const animatedValue = useAnimatedNumber(value);
 
@@ -33,12 +37,30 @@ export default function StatCard({
         className="absolute -top-8 -right-8 w-24 h-24 rounded-full blur-2xl opacity-10 group-hover:opacity-20 transition-opacity"
         style={{ background: color }}
       />
-      {icon && <div className="text-2xl mb-2">{icon}</div>}
+      {icon && <div className="mb-2 text-text-secondary">{icon}</div>}
       <p className="text-text-secondary text-xs uppercase tracking-wider mb-1">{label}</p>
       <p className="font-mono text-3xl font-bold text-text-primary">
         {animatedValue.toLocaleString()}
-        {suffix && <span className="text-lg text-text-secondary ml-1">{suffix}</span>}
+        {suffix && <span className="text-lg text-text-secondary ms-1">{suffix}</span>}
       </p>
+      {trend && (
+        <div
+          className={`flex items-center gap-1 mt-1 text-xs ${
+            trend.direction === "up"
+              ? "text-alert-red"
+              : trend.direction === "down"
+                ? "text-alert-safe"
+                : "text-text-secondary"
+          }`}
+        >
+          {trend.direction === "up" && <TrendingUp size={12} />}
+          {trend.direction === "down" && <TrendingDown size={12} />}
+          <span>
+            {trend.direction === "up" ? "+" : trend.direction === "down" ? "-" : ""}
+            {trend.value}%
+          </span>
+        </div>
+      )}
     </motion.div>
   );
 }

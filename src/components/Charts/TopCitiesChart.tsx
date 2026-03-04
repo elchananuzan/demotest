@@ -40,7 +40,7 @@ export default function TopCitiesChart({ alerts }: TopCitiesChartProps) {
       <div className="space-y-2.5">
         {data.map((city, i) => (
           <div key={city.name_he} className="flex items-center gap-3">
-            <span className="font-mono text-xs text-text-secondary w-5 text-right">{i + 1}</span>
+            <span className="font-mono text-xs text-text-secondary w-5 text-end">{i + 1}</span>
             <span className="text-sm text-text-primary w-20 sm:w-28 truncate">
               {locale === "he" ? city.name_he : city.name_en}
             </span>
@@ -52,7 +52,7 @@ export default function TopCitiesChart({ alerts }: TopCitiesChartProps) {
                 className="h-full bg-gradient-to-r from-alert-red to-alert-warning rounded-full"
               />
             </div>
-            <span className="font-mono text-xs text-text-secondary w-10 text-right">{city.count}</span>
+            <span className="font-mono text-xs text-text-secondary w-10 text-end">{city.count}</span>
           </div>
         ))}
       </div>

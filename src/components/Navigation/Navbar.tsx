@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
 import { useApp } from "@/lib/context";
 import { useInstallPrompt } from "@/lib/hooks";
+import { ShieldLogo } from "@/components/Icons";
 
 const navItems = [
   { href: "/", key: "live" as const },
@@ -25,7 +26,7 @@ export default function Navbar() {
         <div className="flex items-center justify-between h-14">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2">
-            <span className="text-xl font-bold text-alert-red">🦁</span>
+            <ShieldLogo size={22} className="text-alert-red" />
             <span className="text-lg font-bold text-text-primary tracking-tight">
               {locale === "he" ? "זעם האריה" : "LionFury"}
             </span>
@@ -55,7 +56,7 @@ export default function Navbar() {
                     />
                   )}
                   {item.key === "live" && (
-                    <span className="ml-1 inline-block w-1.5 h-1.5 rounded-full bg-alert-red animate-pulse" />
+                    <span className="ms-1 inline-block w-1.5 h-1.5 rounded-full bg-alert-red animate-pulse" />
                   )}
                 </Link>
               );
@@ -99,7 +100,7 @@ export default function Navbar() {
               >
                 {t.nav[item.key]}
                 {item.key === "live" && (
-                  <span className="ml-1 inline-block w-1 h-1 rounded-full bg-alert-red animate-pulse" />
+                  <span className="ms-1 inline-block w-1 h-1 rounded-full bg-alert-red animate-pulse" />
                 )}
               </Link>
             );

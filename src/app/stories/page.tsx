@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { useApp } from "@/lib/context";
 import { useAlerts, useAnimatedNumber } from "@/lib/hooks";
@@ -8,6 +8,7 @@ import { WHERE_WERE_YOU_OPTIONS } from "@/lib/oref";
 import WhereWereYouResults from "@/components/WhereWereYou/WhereWereYouResults";
 import ShareCard from "@/components/ShareCard/ShareCard";
 import { cities } from "@/lib/cities";
+import { ACTIVITY_ICONS, IconMoon, IconSun } from "@/components/Icons";
 
 // Generate demo "where were you" data
 function generateDemoStats() {
@@ -24,6 +25,7 @@ function generateDemoStats() {
 export default function StoriesPage() {
   const { locale, t } = useApp();
   const { alerts } = useAlerts();
+  const [visibleCount, setVisibleCount] = useState(10);
 
   const demoData = useMemo(() => generateDemoStats(), []);
   const animatedTotal = useAnimatedNumber(demoData.total);
@@ -95,9 +97,9 @@ export default function StoriesPage() {
                     repeat: Infinity,
                     ease: "easeInOut",
                   }}
-                  className="text-xl"
+                  className="text-xl text-alert-red"
                 >
-                  {topActivity.emoji}
+                  {(() => { const Icon = ACTIVITY_ICONS[topActivity.key]; return Icon ? <Icon size={20} /> : null; })()}
                 </motion.div>
               ))}
             </div>
@@ -129,7 +131,7 @@ export default function StoriesPage() {
             {locale === "he" ? "ציר זמן עם הקשר אנושי" : "Timeline with Human Context"}
           </h3>
 
-          {alerts.slice(0, 10).map((alert, i) => {
+          {alerts.slice(0, visibleCount).map((alert, i) => {
             const time = new Date(alert.timestamp).toLocaleTimeString(
               locale === "he" ? "he-IL" : "en-US",
               { hour: "2-digit", minute: "2-digit" }
@@ -163,7 +165,7 @@ export default function StoriesPage() {
                 {/* Timeline line */}
                 <div className="flex flex-col items-center">
                   <div className="w-3 h-3 rounded-full bg-alert-red/60 shrink-0 mt-1.5" />
-                  {i < 9 && <div className="w-px flex-1 bg-border" />}
+                  {i < visibleCount - 1 && <div className="w-px flex-1 bg-border" />}
                 </div>
 
                 {/* Card */}
@@ -175,20 +177,31 @@ export default function StoriesPage() {
                         <span className="text-text-secondary text-sm mx-2">•</span>
                         <span className="text-sm text-text-primary font-medium">{cityName}</span>
                         {alert.cities.length > 1 && (
-                          <span className="text-text-secondary text-xs ml-1">
+                          <span className="text-text-secondary text-xs ms-1">
                             +{alert.cities.length - 1}
                           </span>
                         )}
                       </div>
                     </div>
-                    <p className="text-text-secondary text-sm italic">
-                      {isNight ? "🌙" : "☀️"} {context}
+                    <p className="text-text-secondary text-sm italic flex items-center gap-1.5">
+                      {isNight ? <IconMoon size={14} /> : <IconSun size={14} />} {context}
                     </p>
                   </div>
                 </div>
               </motion.div>
             );
           })}
+
+          {visibleCount < alerts.length && (
+            <div className="text-center pt-2">
+              <button
+                onClick={() => setVisibleCount((c) => c + 10)}
+                className="px-6 py-2.5 text-xs font-medium bg-bg-card border border-border rounded-xl text-text-secondary hover:text-text-primary hover:border-alert-red/20 transition-all"
+              >
+                {locale === "he" ? `טען עוד (${alerts.length - visibleCount} נותרו)` : `Load more (${alerts.length - visibleCount} remaining)`}
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Share section */}

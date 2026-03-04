@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ls /Users/elchananuzan/Dev/private/ironWall/src/app/*/)",
+      "Bash(npm install -D vitest @testing-library/react @testing-library/jest-dom jsdom @vitejs/plugin-react)",
+      "Bash(npx vitest run)",
+      "Bash(npx tsc --noEmit)",
+      "Bash(npm run build)",
+      "Bash(npm install lucide-react)",
+      "Bash(ls -la /Users/elchananuzan/Dev/private/ironWall/.env*)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:dmatik.github.io)",
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(f''Count: {len\\(d\\)}''\\); [print\\(f''  {a[\"\"id\"\"][:20]}... cat={a[\"\"category\"\"]} cities={a[\"\"cities\"\"][:2]} ts={a[\"\"timestamp\"\"]}''\\) for a in d[:5]]\")",
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); [print\\(t[''path'']\\) for t in d.get\\(''tree'',[]\\) if t[''path''].endswith\\(''.js''\\)]\")",
+      "Bash(python3 -c \"import sys,json; [print\\(f[''name'']\\) for f in json.load\\(sys.stdin\\)]\")",
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); [print\\(t[''path'']\\) for t in d.get\\(''tree'',[]\\) if ''.py'' in t[''path'']]\")",
+      "Bash(python3 -c \":*)"
+    ]
+  }
+}

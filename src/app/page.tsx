@@ -8,6 +8,7 @@ import AlertMap from "@/components/Map/AlertMap";
 import AlertTicker from "@/components/AlertTicker/AlertTicker";
 import WhereWereYouModal from "@/components/WhereWereYou/WhereWereYouModal";
 import StatCard from "@/components/Charts/StatCard";
+import { ShieldLogo, IconAlert, IconStats, IconCity, IconRocket, IconLab } from "@/components/Icons";
 
 export default function LivePage() {
   const { locale, t } = useApp();
@@ -89,20 +90,20 @@ export default function LivePage() {
           <StatCard
             label={t.live.alertsToday}
             value={alertsToday.length}
-            icon="🚨"
+            icon={<IconAlert size={18} />}
             delay={0}
           />
           <StatCard
             label={t.live.alerts24h}
             value={alerts24h.length}
-            icon="📊"
+            icon={<IconStats size={18} />}
             delay={0.1}
           />
           <div className="hidden sm:block">
             <StatCard
               label={locale === "he" ? "ערים מותקפות" : "Cities Targeted"}
               value={new Set(alerts24h.flatMap((a) => a.cities)).size}
-              icon="🏙️"
+              icon={<IconCity size={18} />}
               delay={0.2}
             />
           </div>
@@ -110,7 +111,7 @@ export default function LivePage() {
             <StatCard
               label={locale === "he" ? "רקטות" : "Rockets"}
               value={alerts24h.filter((a) => a.category === 1).length}
-              icon="🚀"
+              icon={<IconRocket size={18} />}
               color="#ff6600"
               delay={0.3}
             />
@@ -123,14 +124,15 @@ export default function LivePage() {
         onClick={() => setShowWhereWereYou(true)}
         className="fixed bottom-36 sm:bottom-28 right-4 z-40 px-4 py-3 text-xs font-medium bg-bg-card/80 backdrop-blur border border-border rounded-xl text-text-secondary hover:text-alert-red hover:border-alert-red/30 transition-all"
       >
-        {locale === "he" ? "🧪 הדגמה: איפה היית?" : "🧪 Demo: Where Were You?"}
+        <IconLab size={14} className="inline-block me-1" />
+        {locale === "he" ? "הדגמה: איפה היית?" : "Demo: Where Were You?"}
       </button>
 
       {/* Loading skeleton */}
       {isLoading && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-bg">
           <div className="text-center">
-            <div className="text-4xl mb-4 animate-pulse">🦁</div>
+            <div className="mb-4 animate-pulse flex justify-center"><ShieldLogo size={48} className="text-alert-red" /></div>
             <p className="text-text-secondary text-sm animate-pulse">{t.common.loading}</p>
           </div>
         </div>

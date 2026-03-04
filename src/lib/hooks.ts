@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import useSWR from "swr";
-import { type ProcessedAlert, generateDemoAlerts, calculateThreatLevel } from "./oref";
+import { type ProcessedAlert, calculateThreatLevel } from "./oref";
 import type { Locale } from "./i18n";
 
 // Locale hook with localStorage persistence
@@ -54,14 +54,9 @@ export function useAnimatedNumber(target: number, duration = 1000) {
 
 // Alert polling with SWR
 const alertFetcher = async (): Promise<ProcessedAlert[]> => {
-  try {
-    const res = await fetch("/api/alerts");
-    if (!res.ok) throw new Error("Failed to fetch");
-    return res.json();
-  } catch {
-    // Fallback to demo data in development
-    return generateDemoAlerts(30);
-  }
+  const res = await fetch("/api/alerts");
+  if (!res.ok) throw new Error("Failed to fetch alerts");
+  return res.json();
 };
 
 export function useAlerts() {
