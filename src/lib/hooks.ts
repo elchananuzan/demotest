@@ -68,6 +68,8 @@ export function useAlerts() {
 
   const alerts = data || [];
   const activeAlerts = alerts.filter((a) => {
+    // Only real-time alerts can be "active" — history (hist-*) and DB (oref-*) alerts are not live
+    if (a.id.startsWith("hist-") || a.id.startsWith("oref-")) return false;
     // Exclude informational categories (event ended, alerts expected)
     if (INFORMATIONAL_CATEGORIES.has(a.category)) return false;
     const alertTime = new Date(a.timestamp).getTime();
