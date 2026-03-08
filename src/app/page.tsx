@@ -152,58 +152,46 @@ export default function DashboardPage() {
         )}
       </AnimatePresence>
 
-      {/* Informational live banners (event ended / alerts expected) */}
+      {/* Informational live banners — one compact banner per type (ended / expected) */}
       <AnimatePresence>
-        {activeInfoAlerts.length > 0 && activeInfoAlerts.map((info) => {
-          const isEnded = info.category === 13;
-          return (
-            <motion.div
-              key={info.id}
-              initial={{ opacity: 0, y: -60 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -60 }}
-              className={`fixed left-0 right-0 z-30 shadow-lg ${
-                isEnded ? "bg-green-600 text-white" : "bg-amber-500 text-black"
-              }`}
-              style={{ top: activeAlerts.length > 0 ? "calc(3.5rem + 72px)" : "3.5rem" }}
-            >
-              <div className="max-w-6xl mx-auto px-4 py-2.5">
-                <div className="flex items-center gap-2 mb-1">
-                  <span className={`w-2 h-2 rounded-full ${isEnded ? "bg-white" : "bg-black/30"}`} />
-                  <span className="text-xs font-bold uppercase tracking-widest">
-                    {isEnded
+        {activeInfoAlerts.length > 0 && (() => {
+          const ended = activeInfoAlerts.filter((a) => a.category === 13 || (a.title || "").includes("הסתיים") || (a.title || "").includes("הוסר"));
+          const expected = activeInfoAlerts.filter((a) => !ended.includes(a));
+          const groups = [
+            { key: "ended", alerts: ended, isEnded: true },
+            { key: "expected", alerts: expected, isEnded: false },
+          ].filter((g) => g.alerts.length > 0);
+
+          let offsetIdx = 0;
+          return groups.map((group) => {
+            const allCities = Array.from(new Set(group.alerts.flatMap((a) => a.cities)));
+            const idx = offsetIdx++;
+            return (
+              <motion.div
+                key={group.key}
+                initial={{ opacity: 0, y: -40 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -40 }}
+                className={`fixed left-0 right-0 z-30 shadow-lg ${
+                  group.isEnded ? "bg-green-600 text-white" : "bg-amber-500 text-black"
+                }`}
+                style={{ top: `calc(3.5rem + ${(activeAlerts.length > 0 ? 72 : 0) + idx * 36}px)` }}
+              >
+                <div className="max-w-6xl mx-auto px-4 py-2 flex items-center gap-2">
+                  <span className={`w-2 h-2 rounded-full shrink-0 ${group.isEnded ? "bg-white" : "bg-black/30"}`} />
+                  <span className="text-xs font-bold uppercase tracking-widest whitespace-nowrap">
+                    {group.isEnded
                       ? (isHe ? "האירוע הסתיים" : "EVENT ENDED")
-                      : (isHe ? "בדקות הקרובות צפויות התרעות" : "ALERTS EXPECTED")}
+                      : (isHe ? "צפויות התרעות" : "ALERTS EXPECTED")}
+                  </span>
+                  <span className={`text-xs ${group.isEnded ? "opacity-80" : "opacity-70"}`}>
+                    — {allCities.length} {isHe ? "יישובים" : "locations"}
                   </span>
                 </div>
-                {(() => {
-                  const infoCities = info.cities;
-                  return (
-                    <>
-                      <div className="flex flex-wrap gap-1.5 max-h-20 overflow-y-auto">
-                        {infoCities.slice(0, 30).map((c) => (
-                          <span
-                            key={c}
-                            className={`px-2 py-0.5 text-xs font-medium rounded-full ${
-                              isEnded ? "bg-white/20" : "bg-black/10"
-                            }`}
-                          >
-                            {c}
-                          </span>
-                        ))}
-                      </div>
-                      {infoCities.length > 30 && (
-                        <span className={`text-xs mt-1 ${isEnded ? "opacity-70" : "opacity-60"}`}>
-                          {isHe ? `ועוד ${infoCities.length - 30} יישובים` : `+${infoCities.length - 30} more locations`}
-                        </span>
-                      )}
-                    </>
-                  );
-                })()}
-              </div>
-            </motion.div>
-          );
-        })}
+              </motion.div>
+            );
+          });
+        })()}
       </AnimatePresence>
 
       <div className="max-w-6xl mx-auto px-4">
