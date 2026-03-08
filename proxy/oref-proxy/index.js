@@ -40,10 +40,41 @@ function fetchUrl(url, extraHeaders = {}) {
     });
 
     req.on("error", reject);
-    req.setTimeout(10000, () => {
+    req.setTimeout(30000, () => {
       req.destroy();
       reject(new Error("Request timeout"));
     });
+    req.end();
+  });
+}
+
+function postUrl(url, body) {
+  return new Promise((resolve, reject) => {
+    const parsed = new URL(url);
+    const options = {
+      hostname: parsed.hostname,
+      path: parsed.pathname,
+      method: "POST",
+      headers: {
+        ...OREF_HEADERS,
+        Referer: "https://alerts-history.oref.org.il/12481-he/Pakar.aspx",
+        "Content-Type": "application/x-www-form-urlencoded",
+        "Content-Length": Buffer.byteLength(body),
+      },
+    };
+    const req = https.request(options, (res) => {
+      const chunks = [];
+      res.on("data", (chunk) => chunks.push(chunk));
+      res.on("end", () => {
+        resolve({
+          status: res.statusCode,
+          body: Buffer.concat(chunks).toString("utf-8"),
+        });
+      });
+    });
+    req.on("error", reject);
+    req.setTimeout(30000, () => { req.destroy(); reject(new Error("Request timeout")); });
+    req.write(body);
     req.end();
   });
 }
@@ -99,14 +130,62 @@ async function handleRequest(req, res) {
       });
       res.end(result.body);
     } else if (path === "/history" || path === "/oref-proxy/history") {
-      const result = await fetchUrl(OREF_HISTORY_URL);
+      // Support date range queries: ?fromDate=28.02.2026&toDate=01.03.2026
+      const fromDate = url.searchParams.get("fromDate");
+      const toDate = url.searchParams.get("toDate");
+      let historyUrl = OREF_HISTORY_URL;
+      let extraHeaders = {};
+      if (fromDate) {
+        historyUrl = `https://alerts-history.oref.org.il/Shared/Ajax/GetAlarmsHistory.aspx?lang=he&mode=0&fromDate=${fromDate}`;
+        if (toDate) historyUrl += `&toDate=${toDate}`;
+        extraHeaders = {
+          Referer: "https://alerts-history.oref.org.il/12481-he/Pakar.aspx",
+          Origin: "https://alerts-history.oref.org.il",
+        };
+      }
+      const result = await fetchUrl(historyUrl, extraHeaders);
       res.writeHead(result.status, {
         ...corsHeaders(origin),
         "Content-Type": "application/json",
       });
       res.end(result.body);
+    } else if (path === "/test-dates" || path === "/oref-proxy/test-dates") {
+      // Debug: test different methods for date range queries
+      const results = [];
+
+      // Test 1: GET with date params
+      try {
+        const r = await fetchUrl(
+          "https://alerts-history.oref.org.il/Shared/Ajax/GetAlarmsHistory.aspx?lang=he&mode=0&fromDate=28.02.2026&toDate=01.03.2026",
+          { Referer: "https://alerts-history.oref.org.il/12481-he/Pakar.aspx" }
+        );
+        const parsed = JSON.parse(r.body);
+        const dates = [...new Set(parsed.map(x => (x.alertDate || "").slice(0, 10)))].sort();
+        results.push({ method: "GET mode=0 dates", records: parsed.length, dates });
+      } catch (e) { results.push({ method: "GET mode=0 dates", error: e.message }); }
+
+      // Test 2: POST with form data
+      try {
+        const r = await postUrl(
+          "https://alerts-history.oref.org.il/Shared/Ajax/GetAlarmsHistory.aspx",
+          "lang=he&mode=0&fromDate=28.02.2026&toDate=01.03.2026"
+        );
+        const parsed = JSON.parse(r.body);
+        const dates = [...new Set(parsed.map(x => (x.alertDate || "").slice(0, 10)))].sort();
+        results.push({ method: "POST form-data", records: parsed.length, dates });
+      } catch (e) { results.push({ method: "POST form-data", error: e.message }); }
+
+      // Test 3: Alternative static history JSON
+      try {
+        const r = await fetchUrl("https://www.oref.org.il/WarningMessages/History/AlertsHistory.json");
+        const parsed = JSON.parse(r.body);
+        const dates = [...new Set(parsed.map(x => (x.alertDate || "").slice(0, 10)))].sort();
+        results.push({ method: "Static AlertsHistory.json", records: parsed.length, dates: dates.slice(0, 5), totalDates: dates.length });
+      } catch (e) { results.push({ method: "Static AlertsHistory.json", error: e.message }); }
+
+      sendJson(res, 200, results, origin);
     } else if (path === "/" || path === "/oref-proxy") {
-      sendJson(res, 200, { status: "ok", endpoints: ["/alerts", "/history"] }, origin);
+      sendJson(res, 200, { status: "ok", endpoints: ["/alerts", "/history", "/test-dates"] }, origin);
     } else {
       sendJson(res, 404, { error: "Not found" }, origin);
     }
