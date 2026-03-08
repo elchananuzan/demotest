@@ -124,16 +124,28 @@ export default function DashboardPage() {
                     — {activeAlerts[0].title || activeAlerts[0].category_name}
                   </span>
                 </div>
-                <div className="flex flex-wrap gap-1.5">
-                  {Array.from(new Set(activeAlerts.flatMap((a) => a.cities))).map((c) => (
-                    <span
-                      key={c}
-                      className="px-2 py-0.5 text-xs font-medium bg-white/20 rounded-full backdrop-blur-sm"
-                    >
-                      {c}
-                    </span>
-                  ))}
-                </div>
+                {(() => {
+                  const allCities = Array.from(new Set(activeAlerts.flatMap((a) => a.cities)));
+                  return (
+                    <>
+                      <div className="flex flex-wrap gap-1.5 max-h-20 overflow-y-auto">
+                        {allCities.slice(0, 30).map((c) => (
+                          <span
+                            key={c}
+                            className="px-2 py-0.5 text-xs font-medium bg-white/20 rounded-full backdrop-blur-sm"
+                          >
+                            {c}
+                          </span>
+                        ))}
+                      </div>
+                      {allCities.length > 30 && (
+                        <span className="text-xs opacity-70 mt-1">
+                          {isHe ? `ועוד ${allCities.length - 30} יישובים` : `+${allCities.length - 30} more locations`}
+                        </span>
+                      )}
+                    </>
+                  );
+                })()}
               </div>
             </motion.div>
           </>
@@ -164,18 +176,30 @@ export default function DashboardPage() {
                       : (isHe ? "בדקות הקרובות צפויות התרעות" : "ALERTS EXPECTED")}
                   </span>
                 </div>
-                <div className="flex flex-wrap gap-1.5">
-                  {info.cities.map((c) => (
-                    <span
-                      key={c}
-                      className={`px-2 py-0.5 text-xs font-medium rounded-full ${
-                        isEnded ? "bg-white/20" : "bg-black/10"
-                      }`}
-                    >
-                      {c}
-                    </span>
-                  ))}
-                </div>
+                {(() => {
+                  const infoCities = info.cities;
+                  return (
+                    <>
+                      <div className="flex flex-wrap gap-1.5 max-h-20 overflow-y-auto">
+                        {infoCities.slice(0, 30).map((c) => (
+                          <span
+                            key={c}
+                            className={`px-2 py-0.5 text-xs font-medium rounded-full ${
+                              isEnded ? "bg-white/20" : "bg-black/10"
+                            }`}
+                          >
+                            {c}
+                          </span>
+                        ))}
+                      </div>
+                      {infoCities.length > 30 && (
+                        <span className={`text-xs mt-1 ${isEnded ? "opacity-70" : "opacity-60"}`}>
+                          {isHe ? `ועוד ${infoCities.length - 30} יישובים` : `+${infoCities.length - 30} more locations`}
+                        </span>
+                      )}
+                    </>
+                  );
+                })()}
               </div>
             </motion.div>
           );
