@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useApp } from "@/lib/context";
 import { useAlerts, useMyCity, useAnimatedNumber } from "@/lib/hooks";
 import { ShieldLogo, IconAlert, IconStats, IconClock } from "@/components/Icons";
-import { Shield, Search, Clock, Target, AlertTriangle, TrendingUp, TrendingDown, MapPin, BarChart3, X } from "lucide-react";
+import { Shield, Search, Clock, Target, AlertTriangle, TrendingUp, TrendingDown, MapPin, BarChart3, X, Calendar } from "lucide-react";
 import SirenSound from "@/components/SirenSound";
 import StatCard from "@/components/Charts/StatCard";
 import CategoryChart from "@/components/Charts/CategoryChart";
@@ -37,9 +37,23 @@ const RISK_LABELS = {
 
 export default function DashboardPage() {
   const { locale } = useApp();
-  const { alerts, activeAlerts, alertsToday, threatLevel, isLoading } = useAlerts();
+  const { alerts: rawAlerts, activeAlerts, alertsToday, threatLevel, isLoading } = useAlerts();
   const { city, setCity } = useMyCity();
   const isHe = locale === "he";
+
+  // Date range filter
+  const [fromDate, setFromDate] = useState("2026-02-28");
+  const [toDate, setToDate] = useState(() => new Date().toISOString().split("T")[0]);
+
+  // Filter alerts by date range
+  const alerts = useMemo(() => {
+    const from = new Date(fromDate + "T00:00:00").getTime();
+    const to = new Date(toDate + "T23:59:59").getTime();
+    return rawAlerts.filter((a) => {
+      const t = new Date(a.timestamp).getTime();
+      return t >= from && t <= to;
+    });
+  }, [rawAlerts, fromDate, toDate]);
 
   const totalAlerts = useAnimatedNumber(alerts.length);
   const daysSinceWar = Math.floor((Date.now() - WAR_START.getTime()) / (24 * 3600000));
@@ -118,6 +132,37 @@ export default function DashboardPage() {
           <p className="text-text-secondary text-sm">
             {isHe ? "נתוני התרעות בזמן אמת מפיקוד העורף" : "Real-time alert data from Pikud HaOref"}
           </p>
+        </motion.div>
+
+        {/* Date range filter */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="flex flex-wrap items-center gap-3 mb-6 p-3 bg-bg-card border border-border rounded-xl"
+        >
+          <Calendar size={16} className="text-text-secondary" />
+          <span className="text-xs text-text-secondary">{isHe ? "טווח תאריכים:" : "Date range:"}</span>
+          <input
+            type="date"
+            value={fromDate}
+            onChange={(e) => setFromDate(e.target.value)}
+            min="2026-02-28"
+            max={toDate}
+            className="px-2 py-1 text-xs bg-bg border border-border rounded-lg text-text-primary focus:outline-none focus:border-alert-red/50"
+          />
+          <span className="text-xs text-text-secondary">—</span>
+          <input
+            type="date"
+            value={toDate}
+            onChange={(e) => setToDate(e.target.value)}
+            min={fromDate}
+            max={new Date().toISOString().split("T")[0]}
+            className="px-2 py-1 text-xs bg-bg border border-border rounded-lg text-text-primary focus:outline-none focus:border-alert-red/50"
+          />
+          <span className="text-[10px] text-text-secondary/60">
+            ({alerts.length} {isHe ? "התרעות" : "alerts"})
+          </span>
         </motion.div>
 
         {/* Key numbers row */}

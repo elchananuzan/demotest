@@ -180,9 +180,11 @@ export function quietPeriodAnalysis(alerts: ProcessedAlert[]): {
 // City-specific probability & risk analysis
 // ──────────────────────────────────────────────────────────
 
-/** Filter alerts that targeted a specific city */
+/** Filter alerts that targeted a specific city (supports zone matching: "תל אביב" matches "תל אביב - דרום") */
 export function alertsForCity(alerts: ProcessedAlert[], cityName: string): ProcessedAlert[] {
-  return alerts.filter((a) => a.cities.some((c) => c === cityName));
+  return alerts.filter((a) =>
+    a.cities.some((c) => c === cityName || c.startsWith(cityName + " ") || cityName.startsWith(c + " "))
+  );
 }
 
 /** City risk profile — comprehensive stats for a single city */
