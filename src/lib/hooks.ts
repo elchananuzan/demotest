@@ -67,13 +67,22 @@ export function useAlerts() {
   );
 
   const alerts = data || [];
-  const activeAlerts = alerts.filter((a) => {
-    // Only real-time alerts can be "active" — history (hist-*) and DB (oref-*) alerts are not live
+
+  const isRealtimeAndRecent = (a: ProcessedAlert) => {
     if (a.id.startsWith("hist-") || a.id.startsWith("oref-")) return false;
-    // Exclude informational categories (event ended, alerts expected)
+    return Date.now() - new Date(a.timestamp).getTime() < 5 * 60 * 1000;
+  };
+
+  // Real threat alerts (rockets, drones, etc.)
+  const activeAlerts = alerts.filter((a) => {
     if (INFORMATIONAL_CATEGORIES.has(a.category)) return false;
-    const alertTime = new Date(a.timestamp).getTime();
-    return Date.now() - alertTime < 5 * 60 * 1000; // active within 5 minutes
+    return isRealtimeAndRecent(a);
+  });
+
+  // Informational live alerts (event ended = cat 13, alerts expected = cat 14)
+  const activeInfoAlerts = alerts.filter((a) => {
+    if (!INFORMATIONAL_CATEGORIES.has(a.category)) return false;
+    return isRealtimeAndRecent(a);
   });
 
   const alerts24h = alerts.filter((a) => {
@@ -91,6 +100,7 @@ export function useAlerts() {
   return {
     alerts,
     activeAlerts,
+    activeInfoAlerts,
     alerts24h,
     alertsToday,
     threatLevel,

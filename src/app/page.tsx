@@ -38,7 +38,7 @@ const RISK_LABELS = {
 
 export default function DashboardPage() {
   const { locale } = useApp();
-  const { alerts: rawAlerts, activeAlerts, threatLevel, isLoading } = useAlerts();
+  const { alerts: rawAlerts, activeAlerts, activeInfoAlerts, threatLevel, isLoading } = useAlerts();
   const { city, setCity } = useMyCity();
   const isHe = locale === "he";
 
@@ -104,7 +104,7 @@ export default function DashboardPage() {
               <div className="absolute inset-0 border-[3px] border-alert-red/40 animate-pulse" />
             </motion.div>
 
-            {/* Live alert banner with cities */}
+            {/* Live threat banner with cities */}
             <motion.div
               initial={{ opacity: 0, y: -60 }}
               animate={{ opacity: 1, y: 0 }}
@@ -122,12 +122,12 @@ export default function DashboardPage() {
                   </span>
                 </div>
                 <div className="flex flex-wrap gap-1.5">
-                  {Array.from(new Set(activeAlerts.flatMap((a) => a.cities))).map((city) => (
+                  {Array.from(new Set(activeAlerts.flatMap((a) => a.cities))).map((c) => (
                     <span
-                      key={city}
+                      key={c}
                       className="px-2 py-0.5 text-xs font-medium bg-white/20 rounded-full backdrop-blur-sm"
                     >
-                      {city}
+                      {c}
                     </span>
                   ))}
                 </div>
@@ -135,6 +135,48 @@ export default function DashboardPage() {
             </motion.div>
           </>
         )}
+      </AnimatePresence>
+
+      {/* Informational live banners (event ended / alerts expected) */}
+      <AnimatePresence>
+        {activeInfoAlerts.length > 0 && activeInfoAlerts.map((info) => {
+          const isEnded = info.category === 13;
+          return (
+            <motion.div
+              key={info.id}
+              initial={{ opacity: 0, y: -60 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -60 }}
+              className={`fixed left-0 right-0 z-30 shadow-lg ${
+                isEnded ? "bg-green-600 text-white" : "bg-amber-500 text-black"
+              }`}
+              style={{ top: activeAlerts.length > 0 ? "calc(3.5rem + 72px)" : "3.5rem" }}
+            >
+              <div className="max-w-6xl mx-auto px-4 py-2.5">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className={`w-2 h-2 rounded-full ${isEnded ? "bg-white" : "bg-black/30"}`} />
+                  <span className="text-xs font-bold uppercase tracking-widest">
+                    {isEnded
+                      ? (isHe ? "האירוע הסתיים" : "EVENT ENDED")
+                      : (isHe ? "בדקות הקרובות צפויות התרעות" : "ALERTS EXPECTED")}
+                  </span>
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {info.cities.map((c) => (
+                    <span
+                      key={c}
+                      className={`px-2 py-0.5 text-xs font-medium rounded-full ${
+                        isEnded ? "bg-white/20" : "bg-black/10"
+                      }`}
+                    >
+                      {c}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </motion.div>
+          );
+        })}
       </AnimatePresence>
 
       <div className="max-w-6xl mx-auto px-4">
