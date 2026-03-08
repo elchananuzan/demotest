@@ -12,6 +12,8 @@ const OREF_ALERTS_URL = "https://www.oref.org.il/warningMessages/alert/Alerts.js
 const OREF_HISTORY_URL = "https://alerts-history.oref.org.il/Shared/Ajax/GetAlarmsHistory.aspx?lang=he&mode=1";
 
 const IS_DEMO = process.env.NEXT_PUBLIC_DEMO_MODE === "true";
+const PROXY_URL = process.env.OREF_PROXY_URL; // e.g. https://me-west1-xxx.cloudfunctions.net/oref-proxy
+const PROXY_KEY = process.env.OREF_PROXY_KEY || "";
 
 const OREF_HEADERS = {
   "Referer": "https://www.oref.org.il/",
@@ -25,6 +27,24 @@ const OREF_HEADERS = {
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
+/** Build the fetch URLs — use proxy if configured, otherwise direct Oref */
+function getUrls() {
+  if (PROXY_URL) {
+    const base = PROXY_URL.replace(/\/+$/, "");
+    const keyParam = PROXY_KEY ? `?key=${PROXY_KEY}` : "";
+    return {
+      alerts: `${base}/alerts${keyParam}`,
+      history: `${base}/history${keyParam}`,
+      headers: {}, // proxy handles Oref headers
+    };
+  }
+  return {
+    alerts: OREF_ALERTS_URL,
+    history: OREF_HISTORY_URL,
+    headers: OREF_HEADERS,
+  };
+}
+
 export async function GET() {
   // Explicit demo mode
   if (IS_DEMO) {
@@ -32,14 +52,16 @@ export async function GET() {
   }
 
   try {
-    // Fetch from Pikud HaOref
+    const urls = getUrls();
+
+    // Fetch from Pikud HaOref (directly or via proxy)
     const [alertsRes, historyRes] = await Promise.allSettled([
-      fetch(OREF_ALERTS_URL, {
-        headers: { ...OREF_HEADERS, "Client": "true" },
+      fetch(urls.alerts, {
+        headers: { ...urls.headers, ...(PROXY_URL ? {} : { "Client": "true" }) },
         next: { revalidate: 0 },
       }),
-      fetch(OREF_HISTORY_URL, {
-        headers: OREF_HEADERS,
+      fetch(urls.history, {
+        headers: urls.headers,
         next: { revalidate: 0 },
       }),
     ]);
