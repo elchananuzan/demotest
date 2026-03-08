@@ -86,17 +86,49 @@ export default function DashboardPage() {
     <div className="min-h-screen bg-bg pt-16 pb-8">
       <SirenSound active={activeAlerts.length > 0} activeAlerts={activeAlerts} />
 
-      {/* Active alert overlay */}
+      {/* Active alert overlay + live banner */}
       <AnimatePresence>
         {activeAlerts.length > 0 && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-20 bg-alert-red/10 pointer-events-none"
-          >
-            <div className="absolute inset-0 border-[3px] border-alert-red/40 animate-pulse" />
-          </motion.div>
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-20 bg-alert-red/10 pointer-events-none"
+            >
+              <div className="absolute inset-0 border-[3px] border-alert-red/40 animate-pulse" />
+            </motion.div>
+
+            {/* Live alert banner with cities */}
+            <motion.div
+              initial={{ opacity: 0, y: -60 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -60 }}
+              className="fixed top-14 left-0 right-0 z-40 bg-alert-red text-white shadow-lg"
+            >
+              <div className="max-w-6xl mx-auto px-4 py-3">
+                <div className="flex items-center gap-2 mb-1.5">
+                  <span className="w-2.5 h-2.5 rounded-full bg-white animate-pulse" />
+                  <span className="text-xs font-bold uppercase tracking-widest">
+                    {isHe ? "התרעה פעילה" : "LIVE ALERT"}
+                  </span>
+                  <span className="text-xs opacity-80">
+                    — {activeAlerts[0].title || activeAlerts[0].category_name}
+                  </span>
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {Array.from(new Set(activeAlerts.flatMap((a) => a.cities))).map((city) => (
+                    <span
+                      key={city}
+                      className="px-2 py-0.5 text-xs font-medium bg-white/20 rounded-full backdrop-blur-sm"
+                    >
+                      {city}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </motion.div>
+          </>
         )}
       </AnimatePresence>
 

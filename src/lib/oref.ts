@@ -40,8 +40,13 @@ export const ALERT_CATEGORIES: Record<number, { en: string; he: string; color: s
   5: { en: "Tsunami", he: "צונאמי", color: "#0088ff" },
   6: { en: "Hostile Aircraft", he: "חדירת כלי טיס עוין", color: "#ff6600" },
   7: { en: "Hazardous Materials", he: "אירוע חומ\"ס", color: "#ffcc00" },
-  13: { en: "Terrorist Infiltration", he: "חדירת מחבלים", color: "#ff0000" },
+  10: { en: "Terrorist Infiltration", he: "חדירת מחבלים", color: "#ff0000" },
+  13: { en: "Event Ended", he: "אירוע הוסר", color: "#22c55e" },
+  14: { en: "Alerts Expected", he: "צפויות התרעות", color: "#f59e0b" },
 };
+
+/** Categories that are informational (not real active threats) */
+export const INFORMATIONAL_CATEGORIES = new Set([13, 14]);
 
 export function getCategoryInfo(cat: number) {
   return ALERT_CATEGORIES[cat] || { en: "Unknown", he: "לא ידוע", color: "#888899" };
@@ -134,11 +139,11 @@ function mapHistoryCategory(historyCat: number): number {
     case 3: case 4: case 5: case 6: return 7; // General / Hazardous
     case 7: case 8: return 4;   // Earthquake
     case 9: return 3;   // Radiological
-    case 10: return 13; // Terrorist Infiltration → Ballistic
+    case 10: return 10; // Terrorist Infiltration
     case 11: return 5;  // Tsunami
     case 12: return 7;  // Hazardous Materials
-    case 13: return 13; // Event ended (rockets/ballistic)
-    case 14: return 1;  // "Alerts expected in your area" → Rockets
+    case 13: return 13; // Event ended (informational)
+    case 14: return 14; // Alerts expected (informational)
     default: return 1;  // Default to rockets
   }
 }

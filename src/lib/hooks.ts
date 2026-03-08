@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import useSWR from "swr";
-import { type ProcessedAlert, calculateThreatLevel } from "./oref";
+import { type ProcessedAlert, calculateThreatLevel, INFORMATIONAL_CATEGORIES } from "./oref";
 import type { Locale } from "./i18n";
 
 // Locale hook with localStorage persistence
@@ -68,6 +68,8 @@ export function useAlerts() {
 
   const alerts = data || [];
   const activeAlerts = alerts.filter((a) => {
+    // Exclude informational categories (event ended, alerts expected)
+    if (INFORMATIONAL_CATEGORIES.has(a.category)) return false;
     const alertTime = new Date(a.timestamp).getTime();
     return Date.now() - alertTime < 5 * 60 * 1000; // active within 5 minutes
   });
