@@ -174,3 +174,138 @@ export function quietPeriodAnalysis(alerts: ProcessedAlert[]): {
 
   return { currentGapHours, avgGapHours };
 }
+
+// ──────────────────────────────────────────────────────────
+// City-specific probability & risk analysis
+// ──────────────────────────────────────────────────────────
+
+/** Filter alerts that targeted a specific city */
+export function alertsForCity(alerts: ProcessedAlert[], cityName: string): ProcessedAlert[] {
+  return alerts.filter((a) => a.cities.some((c) => c === cityName));
+}
+
+/** City risk profile — comprehensive stats for a single city */
+export interface CityRiskProfile {
+  city: string;
+  totalAlerts: number;
+  alertsLast24h: number;
+  alertsLast7d: number;
+  avgAlertsPerDay: number;
+  peakHour: { hour: number; count: number; label: string };
+  lastAlertTime: string | null;
+  hoursSinceLastAlert: number | null;
+  avgGapHours: number;
+  probabilityNext24h: number; // 0-100%
+  probabilityNext6h: number;  // 0-100%
+  riskLevel: "low" | "moderate" | "high" | "critical";
+  topCategories: { category: number; name: string; count: number; pct: number }[];
+  dangerousDays: { day: string; count: number }[]; // day of week patterns
+}
+
+export function cityRiskProfile(alerts: ProcessedAlert[], cityName: string): CityRiskProfile {
+  const cityAlerts = alertsForCity(alerts, cityName);
+  const now = Date.now();
+
+  // Time-based filters
+  const last24h = cityAlerts.filter((a) => now - new Date(a.timestamp).getTime() < 24 * 3600000);
+  const last7d = cityAlerts.filter((a) => now - new Date(a.timestamp).getTime() < 7 * 24 * 3600000);
+
+  // Sort by time (newest first)
+  const sorted = [...cityAlerts].sort(
+    (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+  );
+
+  // Last alert
+  const lastAlertTime = sorted.length > 0 ? sorted[0].timestamp : null;
+  const hoursSinceLastAlert = lastAlertTime
+    ? (now - new Date(lastAlertTime).getTime()) / 3600000
+    : null;
+
+  // Average gap between alerts for this city
+  let avgGapHours = 0;
+  if (sorted.length >= 2) {
+    let totalGap = 0;
+    for (let i = 0; i < sorted.length - 1; i++) {
+      totalGap += new Date(sorted[i].timestamp).getTime() - new Date(sorted[i + 1].timestamp).getTime();
+    }
+    avgGapHours = totalGap / (sorted.length - 1) / 3600000;
+  }
+
+  // Data time span in days (for daily average)
+  const timeSpanDays = sorted.length >= 2
+    ? (new Date(sorted[0].timestamp).getTime() - new Date(sorted[sorted.length - 1].timestamp).getTime()) / (24 * 3600000)
+    : 1;
+  const avgPerDay = cityAlerts.length / Math.max(timeSpanDays, 1);
+
+  // Peak hour
+  const hourCounts = new Array(24).fill(0);
+  cityAlerts.forEach((a) => hourCounts[new Date(a.timestamp).getHours()]++);
+  const maxHourCount = Math.max(...hourCounts, 0);
+  const maxHour = hourCounts.indexOf(maxHourCount);
+  const endHour = (maxHour + 1) % 24;
+
+  // Probability calculation (Poisson-based)
+  // P(at least 1 alert in T hours) = 1 - e^(-lambda * T)
+  // lambda = alerts per hour
+  const lambda = avgGapHours > 0 ? 1 / avgGapHours : 0;
+  const probabilityNext24h = lambda > 0 ? Math.round((1 - Math.exp(-lambda * 24)) * 100) : 0;
+  const probabilityNext6h = lambda > 0 ? Math.round((1 - Math.exp(-lambda * 6)) * 100) : 0;
+
+  // Risk level
+  let riskLevel: CityRiskProfile["riskLevel"] = "low";
+  if (last24h.length >= 3 || probabilityNext6h >= 70) riskLevel = "critical";
+  else if (last24h.length >= 1 || probabilityNext24h >= 60) riskLevel = "high";
+  else if (last7d.length >= 3 || probabilityNext24h >= 30) riskLevel = "moderate";
+
+  // Top categories
+  const catCounts = new Map<number, { name: string; count: number }>();
+  cityAlerts.forEach((a) => {
+    const existing = catCounts.get(a.category);
+    if (existing) existing.count++;
+    else catCounts.set(a.category, { name: a.category_name, count: 1 });
+  });
+  const topCategories = Array.from(catCounts.entries())
+    .map(([category, { name, count }]) => ({
+      category,
+      name,
+      count,
+      pct: cityAlerts.length > 0 ? Math.round((count / cityAlerts.length) * 100) : 0,
+    }))
+    .sort((a, b) => b.count - a.count);
+
+  // Day-of-week patterns
+  const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+  const dayCounts = new Array(7).fill(0);
+  cityAlerts.forEach((a) => dayCounts[new Date(a.timestamp).getDay()]++);
+  const dangerousDays = dayNames
+    .map((day, i) => ({ day, count: dayCounts[i] }))
+    .sort((a, b) => b.count - a.count);
+
+  return {
+    city: cityName,
+    totalAlerts: cityAlerts.length,
+    alertsLast24h: last24h.length,
+    alertsLast7d: last7d.length,
+    avgAlertsPerDay: Math.round(avgPerDay * 10) / 10,
+    peakHour: {
+      hour: maxHour,
+      count: maxHourCount,
+      label: `${String(maxHour).padStart(2, "0")}:00–${String(endHour).padStart(2, "0")}:00`,
+    },
+    lastAlertTime,
+    hoursSinceLastAlert: hoursSinceLastAlert !== null ? Math.round(hoursSinceLastAlert * 10) / 10 : null,
+    avgGapHours: Math.round(avgGapHours * 10) / 10,
+    probabilityNext24h,
+    probabilityNext6h,
+    riskLevel,
+    topCategories,
+    dangerousDays,
+  };
+}
+
+/** Get all unique city names from alerts (for city picker) */
+export function allCityNames(alerts: ProcessedAlert[]): string[] {
+  const names = new Set<string>();
+  alerts.forEach((a) => a.cities.forEach((c) => names.add(c)));
+  return Array.from(names).sort();
+}

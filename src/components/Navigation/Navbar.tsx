@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 import { useApp } from "@/lib/context";
 import { useInstallPrompt } from "@/lib/hooks";
 import { ShieldLogo } from "@/components/Icons";
+import NotificationBell from "@/components/NotificationBell";
 
 const navItems = [
   { href: "/", key: "live" as const },
@@ -75,6 +76,9 @@ export default function Navbar() {
                 {t.common.install}
               </button>
             )}
+
+            {/* Notification bell */}
+            <NotificationBell />
 
             {/* Language toggle */}
             <button
