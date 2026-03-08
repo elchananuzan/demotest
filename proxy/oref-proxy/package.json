@@ -1,0 +1,9 @@
+{
+  "name": "oref-proxy",
+  "version": "1.0.0",
+  "description": "Lightweight proxy for Oref alert API — deployed to GCP me-west1 (Tel Aviv)",
+  "main": "index.js",
+  "engines": {
+    "node": ">=20"
+  }
+}
