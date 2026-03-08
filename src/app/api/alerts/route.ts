@@ -7,6 +7,7 @@ import {
   type OrefHistoryAlert,
   type ProcessedAlert,
 } from "@/lib/oref";
+import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 
 const OREF_ALERTS_URL = "https://www.oref.org.il/warningMessages/alert/Alerts.json";
 const OREF_HISTORY_URL = "https://alerts-history.oref.org.il/Shared/Ajax/GetAlarmsHistory.aspx?lang=he&mode=1";
@@ -108,16 +109,79 @@ export async function GET() {
     // Sort newest first
     deduped.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
 
+    // Store new alerts in Supabase (fire and forget)
+    if (isSupabaseConfigured && supabase && deduped.length > 0) {
+      storeAlerts(deduped).catch((err) =>
+        console.error("Failed to store alerts in Supabase:", err)
+      );
+    }
+
+    // Read full history from Supabase if available
+    if (isSupabaseConfigured && supabase) {
+      try {
+        const { data: dbAlerts, error } = await supabase
+          .from("alerts")
+          .select("*")
+          .order("timestamp", { ascending: false })
+          .limit(10000);
+
+        if (!error && dbAlerts && dbAlerts.length > 0) {
+          // Merge: fresh Oref data + Supabase history, dedup by id
+          const byId = new Map<string, ProcessedAlert>();
+          for (const a of deduped) byId.set(a.id, a);
+          for (const row of dbAlerts) {
+            if (!byId.has(row.id)) {
+              byId.set(row.id, {
+                id: row.id,
+                timestamp: row.timestamp,
+                category: row.category,
+                category_name: row.category_name,
+                cities: row.cities || [],
+                title: row.title || "",
+                description: row.description || "",
+                raw_data: row.raw_data || {},
+              });
+            }
+          }
+          const merged = Array.from(byId.values()).sort(
+            (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+          );
+          return NextResponse.json(merged);
+        }
+      } catch {
+        // Supabase read failed — fall through to return Oref data only
+      }
+    }
+
     // If we got real data, return it. Otherwise fall back to demo
-    // (Oref API is geo-restricted to Israel — outside IL, both endpoints fail)
     if (deduped.length > 0) {
       return NextResponse.json(deduped);
     }
 
-    // No data — likely geo-blocked. Fall back to demo so the site isn't empty.
     return NextResponse.json(generateDemoAlerts(80));
   } catch (err) {
     console.error("Failed to fetch from Oref API:", err);
     return NextResponse.json(generateDemoAlerts(80));
+  }
+}
+
+/** Store alerts in Supabase (upsert to avoid duplicates) */
+async function storeAlerts(alerts: ProcessedAlert[]) {
+  if (!supabase) return;
+  const rows = alerts.map((a) => ({
+    id: a.id,
+    timestamp: a.timestamp,
+    category: a.category,
+    category_name: a.category_name,
+    cities: a.cities,
+    title: a.title || "",
+    description: a.description || "",
+    raw_data: a.raw_data || {},
+  }));
+  // Upsert in batches of 500
+  for (let i = 0; i < rows.length; i += 500) {
+    const batch = rows.slice(i, i + 500);
+    const { error } = await supabase.from("alerts").upsert(batch, { onConflict: "id" });
+    if (error) console.error("Supabase upsert error:", error.message);
   }
 }
