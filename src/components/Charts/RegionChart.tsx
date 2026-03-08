@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { useApp } from "@/lib/context";
 import { type ProcessedAlert } from "@/lib/oref";
 import { cities } from "@/lib/cities";
+import { baseCityName } from "@/lib/stats";
 
 interface RegionChartProps {
   alerts: ProcessedAlert[];
@@ -30,7 +31,7 @@ export default function RegionChart({ alerts }: RegionChartProps) {
 
     alerts.forEach((a) => {
       a.cities.forEach((cityName) => {
-        const city = cities[cityName];
+        const city = cities[cityName] || cities[baseCityName(cityName)];
         if (city) {
           regionCounts[city.region] = (regionCounts[city.region] || 0) + 1;
         }

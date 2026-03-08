@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { useApp } from "@/lib/context";
 import { type ProcessedAlert } from "@/lib/oref";
 import { cities } from "@/lib/cities";
+import { baseCityName } from "@/lib/stats";
 
 interface TopCitiesChartProps {
   alerts: ProcessedAlert[];
@@ -17,7 +18,8 @@ export default function TopCitiesChart({ alerts }: TopCitiesChartProps) {
     const cityCounts: Record<string, number> = {};
     alerts.forEach((a) => {
       a.cities.forEach((city) => {
-        cityCounts[city] = (cityCounts[city] || 0) + 1;
+        const base = baseCityName(city);
+        cityCounts[base] = (cityCounts[base] || 0) + 1;
       });
     });
 

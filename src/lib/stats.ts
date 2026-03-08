@@ -180,10 +180,29 @@ export function quietPeriodAnalysis(alerts: ProcessedAlert[]): {
 // City-specific probability & risk analysis
 // ──────────────────────────────────────────────────────────
 
-/** Filter alerts that targeted a specific city (supports zone matching: "תל אביב" matches "תל אביב - דרום") */
+/** Normalize zone name to base city (e.g., "תל אביב - דרום העיר ויפו" → "תל אביב") */
+export function baseCityName(name: string): string {
+  // Strip zone suffix after " - "
+  const dashIdx = name.indexOf(" - ");
+  return dashIdx > 0 ? name.slice(0, dashIdx).trim() : name.trim();
+}
+
+/** Count unique base cities hit across all alerts */
+export function uniqueCitiesHit(alerts: ProcessedAlert[]): number {
+  const bases = new Set<string>();
+  for (const a of alerts) {
+    for (const c of a.cities) {
+      bases.add(baseCityName(c));
+    }
+  }
+  return bases.size;
+}
+
+/** Filter alerts that targeted a specific city (normalizes zones: "תל אביב" matches "תל אביב - דרום") */
 export function alertsForCity(alerts: ProcessedAlert[], cityName: string): ProcessedAlert[] {
+  const base = baseCityName(cityName);
   return alerts.filter((a) =>
-    a.cities.some((c) => c === cityName || c.startsWith(cityName + " ") || cityName.startsWith(c + " "))
+    a.cities.some((c) => baseCityName(c) === base || c === cityName)
   );
 }
 

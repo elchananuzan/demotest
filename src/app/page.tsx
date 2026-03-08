@@ -16,7 +16,7 @@ import RegionChart from "@/components/Charts/RegionChart";
 import {
   avgAlertsPerDay, peakHourAnalysis, multiCityAttackPct,
   weekOverWeekTrend, predictNextAttackWindow, quietPeriodAnalysis,
-  cityRiskProfile, allCityNames, alertsForCity,
+  cityRiskProfile, allCityNames, alertsForCity, uniqueCitiesHit,
 } from "@/lib/stats";
 
 const WAR_START = new Date("2026-02-28T00:00:00+03:00");
@@ -59,7 +59,7 @@ export default function DashboardPage() {
   const daysSinceWar = Math.floor((Date.now() - WAR_START.getTime()) / (24 * 3600000));
 
   const cityNames = useMemo(() => allCityNames(alerts), [alerts]);
-  const uniqueCities = useMemo(() => new Set(alerts.flatMap((a) => a.cities)).size, [alerts]);
+  const uniqueCities = useMemo(() => uniqueCitiesHit(alerts), [alerts]);
 
   // Overall stats
   const overallStats = useMemo(() => ({
