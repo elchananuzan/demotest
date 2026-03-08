@@ -236,21 +236,20 @@ function CitySelect({
 }) {
   const [search, setSearch] = useState("");
   const [open, setOpen] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
-  const listRef = useRef<HTMLDivElement>(null);
+  const wrapperRef = useRef<HTMLDivElement>(null);
 
   const filtered = useMemo(() => {
-    if (!search) return cityNames;
-    const q = search.toLowerCase();
-    return cityNames.filter((c) => c.toLowerCase().includes(q));
+    if (!search) return [];
+    const q = search.trim();
+    if (!q) return [];
+    return cityNames.filter((c) => c.includes(q));
   }, [cityNames, search]);
 
   // Close on click outside
   useEffect(() => {
     if (!open) return;
     const handler = (e: MouseEvent) => {
-      const target = e.target as Node;
-      if (!inputRef.current?.parentElement?.contains(target)) {
+      if (!wrapperRef.current?.contains(e.target as Node)) {
         setOpen(false);
       }
     };
@@ -259,9 +258,8 @@ function CitySelect({
   }, [open]);
 
   return (
-    <div className="relative">
+    <div className="relative" ref={wrapperRef}>
       <input
-        ref={inputRef}
         type="text"
         value={open ? search : value || ""}
         placeholder={placeholder}
@@ -274,14 +272,15 @@ function CitySelect({
         autoComplete="off"
       />
       {open && (
-        <div
-          ref={listRef}
-          className="absolute z-50 mt-1 w-full max-h-48 overflow-y-auto bg-bg-card border border-border rounded-xl shadow-lg"
-        >
-          {filtered.length === 0 ? (
-            <div className="px-3 py-2 text-xs text-text-secondary">No results</div>
+        <div className="absolute z-50 mt-1 w-full max-h-48 overflow-y-auto bg-bg-card border border-border rounded-xl shadow-lg">
+          {search.trim() === "" ? (
+            <div className="px-3 py-3 text-xs text-text-secondary text-center">
+              Type to search ({cityNames.length} cities)
+            </div>
+          ) : filtered.length === 0 ? (
+            <div className="px-3 py-2 text-xs text-text-secondary text-center">No results</div>
           ) : (
-            filtered.slice(0, 100).map((name) => (
+            filtered.slice(0, 50).map((name) => (
               <button
                 key={name}
                 type="button"
@@ -298,9 +297,9 @@ function CitySelect({
               </button>
             ))
           )}
-          {filtered.length > 100 && (
+          {filtered.length > 50 && (
             <div className="px-3 py-1.5 text-[10px] text-text-secondary text-center border-t border-border">
-              +{filtered.length - 100} more — type to filter
+              +{filtered.length - 50} more — keep typing
             </div>
           )}
         </div>

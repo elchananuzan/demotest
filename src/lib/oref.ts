@@ -69,8 +69,9 @@ export function processOrefAlert(alert: OrefAlert): ProcessedAlert {
  * represent a single alert targeting multiple locations.
  */
 export function groupHistoryAlerts(records: OrefHistoryAlert[]): ProcessedAlert[] {
-  // Filter out "event ended" (cat 13) and "alerts expected" (cat 14) noise
-  const meaningful = records.filter((r) => r.category !== 13 && r.category !== 14);
+  // Include all categories — cat 13 (early warning/event ended) and cat 14
+  // (alerts expected) are real alerts that targeted these cities
+  const meaningful = records;
 
   // Group by alertDate + category
   const groups = new Map<string, OrefHistoryAlert[]>();
