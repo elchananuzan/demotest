@@ -38,7 +38,7 @@ const RISK_LABELS = {
 
 export default function DashboardPage() {
   const { locale } = useApp();
-  const { alerts: rawAlerts, activeAlerts, alertsToday, threatLevel, isLoading } = useAlerts();
+  const { alerts: rawAlerts, activeAlerts, threatLevel, isLoading } = useAlerts();
   const { city, setCity } = useMyCity();
   const isHe = locale === "he";
 
