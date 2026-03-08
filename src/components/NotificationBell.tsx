@@ -7,19 +7,20 @@ export default function NotificationBell() {
   const [permission, setPermission] = useState<NotificationPermission>("default");
   const [subscribed, setSubscribed] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [supported, setSupported] = useState(false);
 
   useEffect(() => {
-    if (typeof Notification !== "undefined") {
-      setPermission(Notification.permission);
-    }
-    // Check if already subscribed
-    if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.ready.then((reg) => {
-        reg.pushManager.getSubscription().then((sub) => {
-          setSubscribed(!!sub);
-        });
+    // Check browser support (must run client-side)
+    const isSupported = "Notification" in window && "serviceWorker" in navigator;
+    setSupported(isSupported);
+    if (!isSupported) return;
+
+    setPermission(Notification.permission);
+    navigator.serviceWorker.ready.then((reg) => {
+      reg.pushManager.getSubscription().then((sub) => {
+        setSubscribed(!!sub);
       });
-    }
+    });
   }, []);
 
   const subscribe = useCallback(async () => {
@@ -74,10 +75,8 @@ export default function NotificationBell() {
     setLoading(false);
   }, []);
 
-  // Not supported
-  if (typeof window === "undefined" || !("Notification" in window) || !("serviceWorker" in navigator)) {
-    return null;
-  }
+  // Not supported or not yet mounted
+  if (!supported) return null;
 
   // Denied
   if (permission === "denied") {
