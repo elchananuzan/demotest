@@ -66,6 +66,13 @@ export function useAlerts() {
     { refreshInterval: 5000, revalidateOnFocus: true }
   );
 
+  // Tick every 30s so time-based filters (active alerts) re-evaluate even when data is unchanged
+  const [, setTick] = useState(0);
+  useEffect(() => {
+    const id = setInterval(() => setTick((t) => t + 1), 30_000);
+    return () => clearInterval(id);
+  }, []);
+
   const alerts = data || [];
 
   const isRealtimeAndRecent = (a: ProcessedAlert) => {
