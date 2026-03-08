@@ -157,6 +157,27 @@ export function useInstallPrompt() {
   return { isInstallable, install };
 }
 
+// City selection with localStorage persistence
+export function useMyCity() {
+  const [city, setCityState] = useState<string>("");
+
+  useEffect(() => {
+    const saved = localStorage.getItem("iron-wall-my-city");
+    if (saved) setCityState(saved);
+  }, []);
+
+  const setCity = useCallback((c: string) => {
+    setCityState(c);
+    if (c) {
+      localStorage.setItem("iron-wall-my-city", c);
+    } else {
+      localStorage.removeItem("iron-wall-my-city");
+    }
+  }, []);
+
+  return { city, setCity };
+}
+
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
   userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;

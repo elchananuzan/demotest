@@ -9,6 +9,8 @@ import AlertTicker from "@/components/AlertTicker/AlertTicker";
 import WhereWereYouModal from "@/components/WhereWereYou/WhereWereYouModal";
 import StatCard from "@/components/Charts/StatCard";
 import { ShieldLogo, IconAlert, IconStats, IconCity, IconRocket, IconLab } from "@/components/Icons";
+import SirenSound from "@/components/SirenSound";
+import CityRiskCard from "@/components/CityRiskCard";
 
 export default function LivePage() {
   const { locale, t } = useApp();
@@ -28,6 +30,9 @@ export default function LivePage() {
 
   return (
     <div className="relative min-h-screen bg-bg">
+      {/* Siren sound — plays on active alerts and push notifications */}
+      <SirenSound active={activeAlerts.length > 0} activeAlerts={activeAlerts} />
+
       {/* Alert Ticker */}
       <AlertTicker alerts={alerts} />
 
@@ -82,6 +87,11 @@ export default function LivePage() {
       {/* Map */}
       <div className="pt-8">
         <AlertMap alerts={alerts} activeAlerts={activeAlerts} />
+      </div>
+
+      {/* City risk card — floating panel */}
+      <div className="fixed bottom-44 sm:bottom-36 left-3 sm:left-4 z-[26] w-72 sm:w-80 pointer-events-auto">
+        <CityRiskCard alerts={alerts} />
       </div>
 
       {/* Bottom stat cards */}
