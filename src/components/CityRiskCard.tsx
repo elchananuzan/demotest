@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Shield, Clock, Target, ChevronDown, AlertTriangle, MapPin } from "lucide-react";
 import { useApp } from "@/lib/context";
@@ -234,18 +234,77 @@ function CitySelect({
   onChange: (v: string) => void;
   placeholder: string;
 }) {
+  const [search, setSearch] = useState("");
+  const [open, setOpen] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const listRef = useRef<HTMLDivElement>(null);
+
+  const filtered = useMemo(() => {
+    if (!search) return cityNames;
+    const q = search.toLowerCase();
+    return cityNames.filter((c) => c.toLowerCase().includes(q));
+  }, [cityNames, search]);
+
+  // Close on click outside
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: MouseEvent) => {
+      const target = e.target as Node;
+      if (!inputRef.current?.parentElement?.contains(target)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [open]);
+
   return (
-    <select
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      className="w-full px-3 py-2 text-sm bg-bg border border-border rounded-xl text-text-primary focus:outline-none focus:border-alert-red/50 transition-colors appearance-none cursor-pointer"
-    >
-      <option value="">{placeholder}</option>
-      {cityNames.map((name) => (
-        <option key={name} value={name}>
-          {name}
-        </option>
-      ))}
-    </select>
+    <div className="relative">
+      <input
+        ref={inputRef}
+        type="text"
+        value={open ? search : value || ""}
+        placeholder={placeholder}
+        onFocus={() => {
+          setOpen(true);
+          setSearch("");
+        }}
+        onChange={(e) => setSearch(e.target.value)}
+        className="w-full px-3 py-2 text-sm bg-bg border border-border rounded-xl text-text-primary focus:outline-none focus:border-alert-red/50 transition-colors"
+        autoComplete="off"
+      />
+      {open && (
+        <div
+          ref={listRef}
+          className="absolute z-50 mt-1 w-full max-h-48 overflow-y-auto bg-bg-card border border-border rounded-xl shadow-lg"
+        >
+          {filtered.length === 0 ? (
+            <div className="px-3 py-2 text-xs text-text-secondary">No results</div>
+          ) : (
+            filtered.slice(0, 100).map((name) => (
+              <button
+                key={name}
+                type="button"
+                onClick={() => {
+                  onChange(name);
+                  setSearch("");
+                  setOpen(false);
+                }}
+                className={`w-full text-start px-3 py-1.5 text-sm hover:bg-alert-red/10 transition-colors ${
+                  name === value ? "text-alert-red font-medium" : "text-text-primary"
+                }`}
+              >
+                {name}
+              </button>
+            ))
+          )}
+          {filtered.length > 100 && (
+            <div className="px-3 py-1.5 text-[10px] text-text-secondary text-center border-t border-border">
+              +{filtered.length - 100} more — type to filter
+            </div>
+          )}
+        </div>
+      )}
+    </div>
   );
 }

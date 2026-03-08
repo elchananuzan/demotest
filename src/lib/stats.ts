@@ -1,5 +1,6 @@
 import { type ProcessedAlert } from "./oref";
 import { cities } from "./cities";
+import { OREF_CITY_NAMES } from "./oref-cities";
 
 /** Average alerts per day over a given number of days */
 export function avgAlertsPerDay(alerts: ProcessedAlert[], days: number): number {
@@ -303,9 +304,12 @@ export function cityRiskProfile(alerts: ProcessedAlert[], cityName: string): Cit
   };
 }
 
-/** Get all unique city names from alerts (for city picker) */
+/** Get all unique city names — merges Oref database, hardcoded cities, and alert data */
 export function allCityNames(alerts: ProcessedAlert[]): string[] {
-  const names = new Set<string>();
+  const names = new Set<string>(OREF_CITY_NAMES);
+  // Add hardcoded cities
+  Object.keys(cities).forEach((c) => names.add(c));
+  // Add any cities from current alerts that aren't in the lists
   alerts.forEach((a) => a.cities.forEach((c) => names.add(c)));
   return Array.from(names).sort();
 }
