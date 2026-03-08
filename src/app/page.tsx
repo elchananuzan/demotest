@@ -52,6 +52,9 @@ export default function DashboardPage() {
     const to = new Date(toDate + "T23:59:59").getTime();
     return rawAlerts.filter((a) => {
       if (INFORMATIONAL_CATEGORIES.has(a.category)) return false;
+      // Also catch by title keywords (Oref sometimes keeps original cat number)
+      const title = (a.title || "").toLowerCase();
+      if (title.includes("הסתיים") || title.includes("הוסר") || title.includes("בדקות הקרובות") || title.includes("צפויות")) return false;
       const t = new Date(a.timestamp).getTime();
       return t >= from && t <= to;
     });

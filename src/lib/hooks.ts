@@ -73,15 +73,22 @@ export function useAlerts() {
     return Date.now() - new Date(a.timestamp).getTime() < 5 * 60 * 1000;
   };
 
+  // Detect informational by category OR title keywords (Oref sometimes keeps original cat number)
+  const isInformational = (a: ProcessedAlert) => {
+    if (INFORMATIONAL_CATEGORIES.has(a.category)) return true;
+    const title = (a.title || "").toLowerCase();
+    return title.includes("הסתיים") || title.includes("הוסר") || title.includes("בדקות הקרובות") || title.includes("צפויות");
+  };
+
   // Real threat alerts (rockets, drones, etc.)
   const activeAlerts = alerts.filter((a) => {
-    if (INFORMATIONAL_CATEGORIES.has(a.category)) return false;
+    if (isInformational(a)) return false;
     return isRealtimeAndRecent(a);
   });
 
-  // Informational live alerts (event ended = cat 13, alerts expected = cat 14)
+  // Informational live alerts (event ended / alerts expected)
   const activeInfoAlerts = alerts.filter((a) => {
-    if (!INFORMATIONAL_CATEGORIES.has(a.category)) return false;
+    if (!isInformational(a)) return false;
     return isRealtimeAndRecent(a);
   });
 

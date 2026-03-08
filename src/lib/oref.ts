@@ -34,15 +34,15 @@ export interface ProcessedAlert {
 
 export const ALERT_CATEGORIES: Record<number, { en: string; he: string; color: string }> = {
   1: { en: "Rockets & Missiles", he: "ירי רקטות וטילים", color: "#ff3333" },
-  2: { en: "UAV (Drone)", he: "כלי טיס עוין (כטב\"מ)", color: "#ff6600" },
+  2: { en: "UAV (Drone)", he: "חדירת כלי טיס עוין", color: "#ff6600" },
   3: { en: "Radiological", he: "חדירת רדיולוגית", color: "#ff00ff" },
   4: { en: "Earthquake", he: "רעידת אדמה", color: "#ffaa00" },
   5: { en: "Tsunami", he: "צונאמי", color: "#0088ff" },
   6: { en: "Hostile Aircraft", he: "חדירת כלי טיס עוין", color: "#ff6600" },
   7: { en: "Hazardous Materials", he: "אירוע חומ\"ס", color: "#ffcc00" },
   10: { en: "Terrorist Infiltration", he: "חדירת מחבלים", color: "#ff0000" },
-  13: { en: "Event Ended", he: "אירוע הוסר", color: "#22c55e" },
-  14: { en: "Alerts Expected", he: "צפויות התרעות", color: "#f59e0b" },
+  13: { en: "Event Ended", he: "האירוע הסתיים", color: "#22c55e" },
+  14: { en: "Alerts Expected", he: "בדקות הקרובות צפויות התרעות", color: "#f59e0b" },
 };
 
 /** Categories that are informational (not real active threats) */
@@ -54,11 +54,21 @@ export function getCategoryInfo(cat: number) {
 
 /** Process a real-time alert (alerts.json) — these are currently active */
 export function processOrefAlert(alert: OrefAlert): ProcessedAlert {
-  const category = parseInt(alert.cat, 10);
+  let category = parseInt(alert.cat, 10);
+
+  // Oref sends "event ended" / "alerts expected" with the original category number
+  // but changes the title — detect by title keywords and override category
+  const titleLower = (alert.title || "").toLowerCase();
+  if (titleLower.includes("הסתיים") || titleLower.includes("הוסר")) {
+    category = 13; // Event ended
+  } else if (titleLower.includes("בדקות הקרובות") || titleLower.includes("צפויות")) {
+    category = 14; // Alerts expected
+  }
+
   const catInfo = getCategoryInfo(category);
   return {
     id: alert.id || `alert-${Date.now()}`,
-    timestamp: new Date().toISOString(), // real-time alerts are happening NOW
+    timestamp: new Date().toISOString(),
     category,
     category_name: catInfo.en,
     cities: alert.data || [],
@@ -131,21 +141,11 @@ export function groupHistoryAlerts(records: OrefHistoryAlert[]): ProcessedAlert[
   return alerts;
 }
 
-/** Map history API category numbers to our category system */
+/** Map history API category numbers — keep as-is since Oref uses same numbering */
 function mapHistoryCategory(historyCat: number): number {
-  switch (historyCat) {
-    case 1: return 1;   // Rockets & Mortars
-    case 2: return 6;   // Hostile Aircraft Intrusion
-    case 3: case 4: case 5: case 6: return 7; // General / Hazardous
-    case 7: case 8: return 4;   // Earthquake
-    case 9: return 3;   // Radiological
-    case 10: return 10; // Terrorist Infiltration
-    case 11: return 5;  // Tsunami
-    case 12: return 7;  // Hazardous Materials
-    case 13: return 13; // Event ended (informational)
-    case 14: return 14; // Alerts expected (informational)
-    default: return 1;  // Default to rockets
-  }
+  // Oref history API uses the same category numbers as the real-time API
+  // Just pass through — no remapping needed
+  return historyCat;
 }
 
 // Threat level calculation
