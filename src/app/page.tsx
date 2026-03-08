@@ -4,6 +4,7 @@ import { useMemo, useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useApp } from "@/lib/context";
 import { useAlerts, useMyCity, useAnimatedNumber } from "@/lib/hooks";
+import { INFORMATIONAL_CATEGORIES } from "@/lib/oref";
 import { ShieldLogo, IconAlert, IconStats, IconClock } from "@/components/Icons";
 import { Shield, Search, Clock, Target, AlertTriangle, TrendingUp, TrendingDown, MapPin, BarChart3, X, Calendar } from "lucide-react";
 import SirenSound from "@/components/SirenSound";
@@ -45,40 +46,44 @@ export default function DashboardPage() {
   const [fromDate, setFromDate] = useState("2026-03-08");
   const [toDate, setToDate] = useState(() => new Date().toISOString().split("T")[0]);
 
-  // Filter alerts by date range
+  // Filter alerts by date range and exclude informational categories (event ended, alerts expected)
   const alerts = useMemo(() => {
     const from = new Date(fromDate + "T00:00:00").getTime();
     const to = new Date(toDate + "T23:59:59").getTime();
     return rawAlerts.filter((a) => {
+      if (INFORMATIONAL_CATEGORIES.has(a.category)) return false;
       const t = new Date(a.timestamp).getTime();
       return t >= from && t <= to;
     });
   }, [rawAlerts, fromDate, toDate]);
 
-  const totalAlerts = useAnimatedNumber(alerts.length);
   const daysSinceWar = Math.floor((Date.now() - WAR_START.getTime()) / (24 * 3600000));
 
   const cityNames = useMemo(() => allCityNames(alerts), [alerts]);
-  const uniqueCities = useMemo(() => uniqueCitiesHit(alerts), [alerts]);
 
-  // Overall stats
-  const overallStats = useMemo(() => ({
-    avg7: avgAlertsPerDay(alerts, 7),
-    peak: peakHourAnalysis(alerts),
-    multiCity: multiCityAttackPct(alerts),
-    wow: weekOverWeekTrend(alerts),
-    prediction: predictNextAttackWindow(alerts),
-    quiet: quietPeriodAnalysis(alerts),
-  }), [alerts]);
-
-  // City-specific stats
-  const cityProfile = useMemo(
-    () => city ? cityRiskProfile(alerts, city) : null,
-    [alerts, city]
-  );
-
+  // City-filtered alerts — when a city is selected, everything uses this
   const cityAlerts = useMemo(
     () => city ? alertsForCity(alerts, city) : [],
+    [alerts, city]
+  );
+  const displayAlerts = city ? cityAlerts : alerts;
+
+  const totalAlerts = useAnimatedNumber(displayAlerts.length);
+  const uniqueCities = useMemo(() => uniqueCitiesHit(displayAlerts), [displayAlerts]);
+
+  // Stats adapt to selected city
+  const overallStats = useMemo(() => ({
+    avg7: avgAlertsPerDay(displayAlerts, 7),
+    peak: peakHourAnalysis(displayAlerts),
+    multiCity: multiCityAttackPct(displayAlerts),
+    wow: weekOverWeekTrend(displayAlerts),
+    prediction: predictNextAttackWindow(displayAlerts),
+    quiet: quietPeriodAnalysis(displayAlerts),
+  }), [displayAlerts]);
+
+  // City-specific profile (for risk card)
+  const cityProfile = useMemo(
+    () => city ? cityRiskProfile(alerts, city) : null,
     [alerts, city]
   );
 
@@ -192,7 +197,7 @@ export default function DashboardPage() {
             className="px-2 py-1 text-xs bg-bg border border-border rounded-lg text-text-primary focus:outline-none focus:border-alert-red/50"
           />
           <span className="text-[10px] text-text-secondary/60">
-            ({alerts.length} {isHe ? "התרעות" : "alerts"})
+            ({displayAlerts.length} {isHe ? "התרעות" : "alerts"}{city ? ` — ${city}` : ""})
           </span>
         </motion.div>
 
@@ -206,7 +211,10 @@ export default function DashboardPage() {
           />
           <StatCard
             label={isHe ? "התרעות היום" : "Today"}
-            value={alertsToday.length}
+            value={displayAlerts.filter((a) => {
+              const today = new Date(); today.setHours(0, 0, 0, 0);
+              return new Date(a.timestamp) >= today;
+            }).length}
             icon={<IconStats size={18} />}
             delay={0.1}
           />
@@ -326,33 +334,35 @@ export default function DashboardPage() {
           )}
         </AnimatePresence>
 
-        {/* ──── OVERALL CHARTS ──── */}
-        {alerts.length > 0 && (
+        {/* ──── CHARTS ──── */}
+        {displayAlerts.length > 0 && (
           <>
             <h2 className="text-lg font-semibold text-text-primary mb-4">
-              {isHe ? "ניתוח כללי" : "Overall Analysis"}
+              {city
+                ? (isHe ? `ניתוח — ${city}` : `Analysis — ${city}`)
+                : (isHe ? "ניתוח כללי" : "Overall Analysis")}
             </h2>
 
             <div className="grid gap-6 md:grid-cols-2 mb-6">
               <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
-                <TopCitiesChart alerts={alerts} />
+                <TopCitiesChart alerts={displayAlerts} />
               </motion.div>
               <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
-                <CategoryChart alerts={alerts} />
+                <CategoryChart alerts={displayAlerts} />
               </motion.div>
             </div>
 
             <div className="grid gap-6 md:grid-cols-2 mb-6">
               <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}>
-                <HourlyChart alerts={alerts} />
+                <HourlyChart alerts={displayAlerts} />
               </motion.div>
               <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6 }}>
-                <RegionChart alerts={alerts} />
+                <RegionChart alerts={displayAlerts} />
               </motion.div>
             </div>
 
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.7 }} className="mb-6">
-              <AlertHeatmap alerts={alerts} />
+              <AlertHeatmap alerts={displayAlerts} />
             </motion.div>
           </>
         )}
