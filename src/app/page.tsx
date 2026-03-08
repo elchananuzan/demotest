@@ -41,8 +41,8 @@ export default function DashboardPage() {
   const { city, setCity } = useMyCity();
   const isHe = locale === "he";
 
-  // Date range filter
-  const [fromDate, setFromDate] = useState("2026-02-28");
+  // Date range filter — from first day of data collection onward
+  const [fromDate, setFromDate] = useState("2026-03-08");
   const [toDate, setToDate] = useState(() => new Date().toISOString().split("T")[0]);
 
   // Filter alerts by date range
@@ -147,7 +147,6 @@ export default function DashboardPage() {
             type="date"
             value={fromDate}
             onChange={(e) => setFromDate(e.target.value)}
-            min="2026-02-28"
             max={toDate}
             className="px-2 py-1 text-xs bg-bg border border-border rounded-lg text-text-primary focus:outline-none focus:border-alert-red/50"
           />
