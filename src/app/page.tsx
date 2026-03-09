@@ -43,6 +43,7 @@ export default function DashboardPage() {
   const { city, setCity } = useMyCity();
   const { settings: alertSettings, setSettings: setAlertSettings } = useAlertSettings();
   const [showSettings, setShowSettings] = useState(false);
+  const [dismissedBanners, setDismissedBanners] = useState<Set<string>>(new Set());
   const isHe = locale === "he";
 
   // Date range filter — from first day of data collection onward
@@ -104,13 +105,28 @@ export default function DashboardPage() {
     return activeInfoAlerts.filter((a) => a.cities.some((c) => c.includes(city) || city.includes(c)));
   }, [activeInfoAlerts, city, alertSettings.cityFilterEnabled]);
 
+  // Banner keys for dismiss tracking — changes when alert set changes
+  const threatBannerKey = useMemo(() => filteredActiveAlerts.map((a) => a.id).sort().join(","), [filteredActiveAlerts]);
+  const infoBannerKey = useMemo(() => filteredInfoAlerts.map((a) => a.id).sort().join(","), [filteredInfoAlerts]);
+
+  // Reset dismiss when new alerts arrive
+  useEffect(() => {
+    if (threatBannerKey) setDismissedBanners((prev) => { const next = new Set(prev); next.delete("threat"); return next; });
+  }, [threatBannerKey]);
+  useEffect(() => {
+    if (infoBannerKey) setDismissedBanners((prev) => { const next = new Set(prev); next.delete("info"); return next; });
+  }, [infoBannerKey]);
+
+  const showThreatBanner = filteredActiveAlerts.length > 0 && !dismissedBanners.has("threat");
+  const showInfoBanner = filteredInfoAlerts.length > 0 && !dismissedBanners.has("info");
+
   return (
     <div className="min-h-screen bg-bg pt-16 pb-8">
       <SirenSound active={filteredActiveAlerts.length > 0} activeAlerts={filteredActiveAlerts} settings={alertSettings} />
 
       {/* Active alert overlay + live banner */}
       <AnimatePresence>
-        {filteredActiveAlerts.length > 0 && (
+        {showThreatBanner && (
           <>
             <motion.div
               initial={{ opacity: 0 }}
@@ -137,6 +153,13 @@ export default function DashboardPage() {
                   <span className="text-xs opacity-80">
                     — {filteredActiveAlerts[0].title || filteredActiveAlerts[0].category_name}
                   </span>
+                  <button
+                    onClick={() => setDismissedBanners((prev) => new Set(prev).add("threat"))}
+                    className="ms-auto p-1 rounded-md hover:bg-white/20 transition-colors"
+                    title={isHe ? "סגור" : "Dismiss"}
+                  >
+                    <X size={14} />
+                  </button>
                 </div>
                 {(() => {
                   const allCities = Array.from(new Set(filteredActiveAlerts.flatMap((a) => a.cities)));
@@ -168,7 +191,7 @@ export default function DashboardPage() {
 
       {/* Informational live banners — one compact banner per type (ended / expected) */}
       <AnimatePresence>
-        {filteredInfoAlerts.length > 0 && (() => {
+        {showInfoBanner && (() => {
           const ended = filteredInfoAlerts.filter((a) => a.category === 13 || (a.title || "").includes("הסתיים") || (a.title || "").includes("הוסר"));
           const expected = filteredInfoAlerts.filter((a) => !ended.includes(a));
           const groups = [
@@ -189,7 +212,7 @@ export default function DashboardPage() {
                 className={`fixed left-0 right-0 z-30 shadow-lg ${
                   group.isEnded ? "bg-green-600 text-white" : "bg-amber-500 text-black"
                 }`}
-                style={{ top: `calc(3.5rem + ${(filteredActiveAlerts.length > 0 ? 72 : 0) + idx * 36}px)` }}
+                style={{ top: `calc(3.5rem + ${(showThreatBanner ? 72 : 0) + idx * 36}px)` }}
               >
                 <div className="max-w-6xl mx-auto px-4 py-2 flex items-center gap-2">
                   <span className={`w-2 h-2 rounded-full shrink-0 ${group.isEnded ? "bg-white" : "bg-black/30"}`} />
@@ -201,6 +224,15 @@ export default function DashboardPage() {
                   <span className={`text-xs ${group.isEnded ? "opacity-80" : "opacity-70"}`}>
                     — {allCities.length} {isHe ? "יישובים" : "locations"}
                   </span>
+                  <button
+                    onClick={() => setDismissedBanners((prev) => new Set(prev).add("info"))}
+                    className={`ms-auto p-1 rounded-md transition-colors ${
+                      group.isEnded ? "hover:bg-white/20" : "hover:bg-black/10"
+                    }`}
+                    title={isHe ? "סגור" : "Dismiss"}
+                  >
+                    <X size={12} />
+                  </button>
                 </div>
               </motion.div>
             );
