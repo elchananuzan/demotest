@@ -212,7 +212,8 @@ export interface AlertSettings {
   customEarly: string | null;
   customClear: string | null;
   volume: number;               // 0-100
-  cityFilterEnabled: boolean;   // only alert/show banners for selected city
+  cityFilterEnabled: boolean;   // only alert/show banners for selected zones
+  alertZones: string[];         // independent zone list for alert filtering
 }
 
 const DEFAULT_SETTINGS: AlertSettings = {
@@ -221,6 +222,7 @@ const DEFAULT_SETTINGS: AlertSettings = {
   customClear: null,
   volume: 80,
   cityFilterEnabled: false,
+  alertZones: [],
 };
 
 const SETTINGS_KEY = "iron-wall-alert-settings";

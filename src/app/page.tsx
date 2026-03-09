@@ -94,16 +94,18 @@ export default function DashboardPage() {
     [alerts, city]
   );
 
-  // Filter active alerts by selected city when city filter is enabled
+  // Filter active alerts by selected zones when zone filter is enabled
   const filteredActiveAlerts = useMemo(() => {
-    if (!alertSettings.cityFilterEnabled || !city) return activeAlerts;
-    return activeAlerts.filter((a) => a.cities.some((c) => c.includes(city) || city.includes(c)));
-  }, [activeAlerts, city, alertSettings.cityFilterEnabled]);
+    const zones = alertSettings.alertZones;
+    if (!alertSettings.cityFilterEnabled || zones.length === 0) return activeAlerts;
+    return activeAlerts.filter((a) => a.cities.some((c) => zones.some((z) => c.includes(z) || z.includes(c))));
+  }, [activeAlerts, alertSettings.cityFilterEnabled, alertSettings.alertZones]);
 
   const filteredInfoAlerts = useMemo(() => {
-    if (!alertSettings.cityFilterEnabled || !city) return activeInfoAlerts;
-    return activeInfoAlerts.filter((a) => a.cities.some((c) => c.includes(city) || city.includes(c)));
-  }, [activeInfoAlerts, city, alertSettings.cityFilterEnabled]);
+    const zones = alertSettings.alertZones;
+    if (!alertSettings.cityFilterEnabled || zones.length === 0) return activeInfoAlerts;
+    return activeInfoAlerts.filter((a) => a.cities.some((c) => zones.some((z) => c.includes(z) || z.includes(c))));
+  }, [activeInfoAlerts, alertSettings.cityFilterEnabled, alertSettings.alertZones]);
 
   // Banner keys for dismiss tracking — changes when alert set changes
   const threatBannerKey = useMemo(() => filteredActiveAlerts.map((a) => a.id).sort().join(","), [filteredActiveAlerts]);
@@ -331,6 +333,7 @@ export default function DashboardPage() {
                   settings={alertSettings}
                   onChange={setAlertSettings}
                   isHe={isHe}
+                  allCityNames={cityNames}
                 />
               </div>
             </motion.div>

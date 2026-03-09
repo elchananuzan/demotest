@@ -1,7 +1,7 @@
 "use client";
 
-import { useRef } from "react";
-import { Volume2, Upload, Trash2, Play } from "lucide-react";
+import { useRef, useState, useMemo } from "react";
+import { Volume2, Upload, Trash2, Play, MapPin, X, Search } from "lucide-react";
 import { type AlertSettings } from "@/lib/hooks";
 
 /** Read a file as a data URL string */
@@ -26,28 +26,49 @@ export default function AlertSettingsPanel({
   settings,
   onChange,
   isHe,
+  allCityNames,
 }: {
   settings: AlertSettings;
   onChange: (partial: Partial<AlertSettings>) => void;
   isHe: boolean;
+  allCityNames: string[];
 }) {
   const sirenInputRef = useRef<HTMLInputElement>(null);
   const earlyInputRef = useRef<HTMLInputElement>(null);
   const clearInputRef = useRef<HTMLInputElement>(null);
+  const [zoneSearch, setZoneSearch] = useState("");
 
   const handleFileUpload = async (
     file: File | undefined,
     key: "customSiren" | "customEarly" | "customClear"
   ) => {
     if (!file) return;
-    // Limit to 2MB to avoid localStorage quota issues
-    if (file.size > 2 * 1024 * 1024) {
-      alert(isHe ? "הקובץ גדול מדי (מקסימום 2MB)" : "File too large (max 2MB)");
-      return;
-    }
     const dataUrl = await readFileAsDataUrl(file);
-    onChange({ [key]: dataUrl });
+    try {
+      onChange({ [key]: dataUrl });
+    } catch {
+      alert(isHe ? "לא ניתן לשמור — הקובץ גדול מדי לאחסון המקומי" : "Cannot save — file too large for local storage");
+    }
   };
+
+  const addZone = (zone: string) => {
+    if (!settings.alertZones.includes(zone)) {
+      onChange({ alertZones: [...settings.alertZones, zone] });
+    }
+    setZoneSearch("");
+  };
+
+  const removeZone = (zone: string) => {
+    onChange({ alertZones: settings.alertZones.filter((z) => z !== zone) });
+  };
+
+  const filteredCities = useMemo(() => {
+    const q = zoneSearch.trim();
+    if (!q) return [];
+    return allCityNames
+      .filter((c) => c.includes(q) && !settings.alertZones.includes(c))
+      .slice(0, 20);
+  }, [allCityNames, zoneSearch, settings.alertZones]);
 
   return (
     <div className="space-y-4">
@@ -67,18 +88,77 @@ export default function AlertSettingsPanel({
         />
       </div>
 
-      {/* City filter toggle */}
-      <label className="flex items-center gap-2 cursor-pointer">
-        <input
-          type="checkbox"
-          checked={settings.cityFilterEnabled}
-          onChange={(e) => onChange({ cityFilterEnabled: e.target.checked })}
-          className="accent-alert-red w-4 h-4"
-        />
-        <span className="text-xs text-text-secondary">
-          {isHe ? "התרעות רק עבור העיר שנבחרה" : "Alerts only for selected city"}
-        </span>
-      </label>
+      {/* Zone filter toggle + zone picker */}
+      <div className="space-y-2">
+        <label className="flex items-center gap-2 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={settings.cityFilterEnabled}
+            onChange={(e) => onChange({ cityFilterEnabled: e.target.checked })}
+            className="accent-alert-red w-4 h-4"
+          />
+          <span className="text-xs text-text-secondary">
+            {isHe ? "התרעות רק עבור אזורים נבחרים" : "Alerts only for selected zones"}
+          </span>
+        </label>
+
+        {settings.cityFilterEnabled && (
+          <div className="space-y-2 ps-6">
+            {/* Selected zones */}
+            {settings.alertZones.length > 0 && (
+              <div className="flex flex-wrap gap-1.5">
+                {settings.alertZones.map((zone) => (
+                  <span
+                    key={zone}
+                    className="inline-flex items-center gap-1 px-2 py-0.5 text-xs bg-alert-red/10 text-alert-red rounded-full border border-alert-red/20"
+                  >
+                    <MapPin size={10} />
+                    {zone}
+                    <button
+                      onClick={() => removeZone(zone)}
+                      className="hover:bg-alert-red/20 rounded-full p-0.5 transition-colors"
+                    >
+                      <X size={10} />
+                    </button>
+                  </span>
+                ))}
+              </div>
+            )}
+
+            {/* Search to add zones */}
+            <div className="relative">
+              <Search size={12} className="absolute start-2 top-1/2 -translate-y-1/2 text-text-secondary" />
+              <input
+                type="text"
+                value={zoneSearch}
+                onChange={(e) => setZoneSearch(e.target.value)}
+                placeholder={isHe ? "חפש אזור להוספה..." : "Search zone to add..."}
+                className="w-full ps-7 pe-3 py-1.5 text-xs bg-bg border border-border rounded-lg text-text-primary focus:outline-none focus:border-alert-red/50"
+              />
+              {filteredCities.length > 0 && (
+                <div className="absolute z-50 mt-1 w-full max-h-40 overflow-y-auto bg-bg-card border border-border rounded-lg shadow-lg">
+                  {filteredCities.map((name) => (
+                    <button
+                      key={name}
+                      type="button"
+                      onClick={() => addZone(name)}
+                      className="w-full text-start px-3 py-1.5 text-xs hover:bg-alert-red/10 transition-colors text-text-primary"
+                    >
+                      {name}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {settings.alertZones.length === 0 && (
+              <p className="text-[10px] text-text-secondary/60">
+                {isHe ? "הוסף אזורים כדי לסנן התרעות" : "Add zones to filter alerts"}
+              </p>
+            )}
+          </div>
+        )}
+      </div>
 
       {/* Sound pickers */}
       <SoundPicker
