@@ -124,7 +124,7 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-bg pt-16 pb-8">
-      <SirenSound active={filteredActiveAlerts.length > 0} activeAlerts={filteredActiveAlerts} settings={alertSettings} />
+      <SirenSound active={showThreatBanner} activeAlerts={filteredActiveAlerts} settings={alertSettings} />
 
       {/* Active alert overlay + live banner */}
       <AnimatePresence>
