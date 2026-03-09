@@ -1,16 +1,29 @@
 "use client";
 
 import { useRef, useState, useMemo } from "react";
-import { Volume2, Upload, Trash2, Play, MapPin, X, Search } from "lucide-react";
+import { Volume2, Upload, Trash2, Play, MapPin, X, Search, Loader2 } from "lucide-react";
 import { type AlertSettings } from "@/lib/hooks";
 
-/** Read a file as a data URL string */
-function readFileAsDataUrl(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result as string);
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
+/** Upload a sound file to Supabase Storage via API */
+async function uploadSound(file: File, type: string): Promise<string> {
+  const form = new FormData();
+  form.append("file", file);
+  form.append("type", type);
+  const res = await fetch("/api/sounds", { method: "POST", body: form });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: "Upload failed" }));
+    throw new Error(err.error || "Upload failed");
+  }
+  const { url } = await res.json();
+  return url;
+}
+
+/** Delete a sound file from Supabase Storage via API */
+async function deleteSound(url: string): Promise<void> {
+  await fetch("/api/sounds", {
+    method: "DELETE",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ path: url }),
   });
 }
 
@@ -37,18 +50,38 @@ export default function AlertSettingsPanel({
   const earlyInputRef = useRef<HTMLInputElement>(null);
   const clearInputRef = useRef<HTMLInputElement>(null);
   const [zoneSearch, setZoneSearch] = useState("");
+  const [uploading, setUploading] = useState<string | null>(null);
+
+  const typeMap = {
+    customSiren: "siren",
+    customEarly: "early",
+    customClear: "clear",
+  } as const;
 
   const handleFileUpload = async (
     file: File | undefined,
     key: "customSiren" | "customEarly" | "customClear"
   ) => {
     if (!file) return;
-    const dataUrl = await readFileAsDataUrl(file);
+    setUploading(key);
     try {
-      onChange({ [key]: dataUrl });
-    } catch {
-      alert(isHe ? "לא ניתן לשמור — הקובץ גדול מדי לאחסון המקומי" : "Cannot save — file too large for local storage");
+      // Delete old custom sound if exists
+      const oldUrl = settings[key];
+      if (oldUrl) deleteSound(oldUrl).catch(() => {});
+      // Upload new sound to Supabase Storage
+      const url = await uploadSound(file, typeMap[key]);
+      onChange({ [key]: url });
+    } catch (err) {
+      alert(isHe ? "שגיאה בהעלאת הקובץ" : `Upload failed: ${err instanceof Error ? err.message : "Unknown error"}`);
+    } finally {
+      setUploading(null);
     }
+  };
+
+  const handleRemoveSound = async (key: "customSiren" | "customEarly" | "customClear") => {
+    const url = settings[key];
+    if (url) deleteSound(url).catch(() => {});
+    onChange({ [key]: null });
   };
 
   const addZone = (zone: string) => {
@@ -104,7 +137,6 @@ export default function AlertSettingsPanel({
 
         {settings.cityFilterEnabled && (
           <div className="space-y-2 ps-6">
-            {/* Selected zones */}
             {settings.alertZones.length > 0 && (
               <div className="flex flex-wrap gap-1.5">
                 {settings.alertZones.map((zone) => (
@@ -125,7 +157,6 @@ export default function AlertSettingsPanel({
               </div>
             )}
 
-            {/* Search to add zones */}
             <div className="relative">
               <Search size={12} className="absolute start-2 top-1/2 -translate-y-1/2 text-text-secondary" />
               <input
@@ -165,8 +196,9 @@ export default function AlertSettingsPanel({
         label={isHe ? "צליל סירנה (התקפה)" : "Siren sound (attack)"}
         defaultLabel={isHe ? "סירנה ברירת מחדל" : "Default siren"}
         hasCustom={!!settings.customSiren}
+        uploading={uploading === "customSiren"}
         onUpload={() => sirenInputRef.current?.click()}
-        onRemove={() => onChange({ customSiren: null })}
+        onRemove={() => handleRemoveSound("customSiren")}
         onPreview={() => previewSound(settings.customSiren || "/siren.mp3", settings.volume)}
         isHe={isHe}
       />
@@ -175,15 +207,16 @@ export default function AlertSettingsPanel({
         type="file"
         accept="audio/*"
         className="hidden"
-        onChange={(e) => handleFileUpload(e.target.files?.[0], "customSiren")}
+        onChange={(e) => { handleFileUpload(e.target.files?.[0], "customSiren"); e.target.value = ""; }}
       />
 
       <SoundPicker
         label={isHe ? "צליל התרעה מקדימה" : "Early warning sound"}
         defaultLabel={isHe ? "צלצול ברירת מחדל" : "Default chime"}
         hasCustom={!!settings.customEarly}
+        uploading={uploading === "customEarly"}
         onUpload={() => earlyInputRef.current?.click()}
-        onRemove={() => onChange({ customEarly: null })}
+        onRemove={() => handleRemoveSound("customEarly")}
         onPreview={() => previewSound(settings.customEarly || "/alert-early.mp3", settings.volume)}
         isHe={isHe}
       />
@@ -192,15 +225,16 @@ export default function AlertSettingsPanel({
         type="file"
         accept="audio/*"
         className="hidden"
-        onChange={(e) => handleFileUpload(e.target.files?.[0], "customEarly")}
+        onChange={(e) => { handleFileUpload(e.target.files?.[0], "customEarly"); e.target.value = ""; }}
       />
 
       <SoundPicker
         label={isHe ? "צליל סיום התרעה" : "All-clear sound"}
         defaultLabel={isHe ? "סיום ברירת מחדל" : "Default clear"}
         hasCustom={!!settings.customClear}
+        uploading={uploading === "customClear"}
         onUpload={() => clearInputRef.current?.click()}
-        onRemove={() => onChange({ customClear: null })}
+        onRemove={() => handleRemoveSound("customClear")}
         onPreview={() => previewSound(settings.customClear || "/alert-clear.mp3", settings.volume)}
         isHe={isHe}
       />
@@ -209,7 +243,7 @@ export default function AlertSettingsPanel({
         type="file"
         accept="audio/*"
         className="hidden"
-        onChange={(e) => handleFileUpload(e.target.files?.[0], "customClear")}
+        onChange={(e) => { handleFileUpload(e.target.files?.[0], "customClear"); e.target.value = ""; }}
       />
     </div>
   );
@@ -219,6 +253,7 @@ function SoundPicker({
   label,
   defaultLabel,
   hasCustom,
+  uploading,
   onUpload,
   onRemove,
   onPreview,
@@ -227,6 +262,7 @@ function SoundPicker({
   label: string;
   defaultLabel: string;
   hasCustom: boolean;
+  uploading: boolean;
   onUpload: () => void;
   onRemove: () => void;
   onPreview: () => void;
@@ -237,32 +273,42 @@ function SoundPicker({
       <div className="min-w-0">
         <p className="text-xs font-medium text-text-primary truncate">{label}</p>
         <p className="text-[10px] text-text-secondary">
-          {hasCustom ? (isHe ? "צליל מותאם אישית" : "Custom sound") : defaultLabel}
+          {uploading
+            ? (isHe ? "מעלה..." : "Uploading...")
+            : hasCustom
+              ? (isHe ? "צליל מותאם אישית" : "Custom sound")
+              : defaultLabel}
         </p>
       </div>
       <div className="flex items-center gap-1 shrink-0">
-        <button
-          onClick={onPreview}
-          className="p-1.5 rounded-md hover:bg-bg-card text-text-secondary hover:text-text-primary transition-colors"
-          title={isHe ? "נגן" : "Preview"}
-        >
-          <Play size={14} />
-        </button>
-        <button
-          onClick={onUpload}
-          className="p-1.5 rounded-md hover:bg-bg-card text-text-secondary hover:text-text-primary transition-colors"
-          title={isHe ? "העלה קובץ" : "Upload file"}
-        >
-          <Upload size={14} />
-        </button>
-        {hasCustom && (
-          <button
-            onClick={onRemove}
-            className="p-1.5 rounded-md hover:bg-alert-red/10 text-text-secondary hover:text-alert-red transition-colors"
-            title={isHe ? "חזור לברירת מחדל" : "Reset to default"}
-          >
-            <Trash2 size={14} />
-          </button>
+        {uploading ? (
+          <Loader2 size={14} className="animate-spin text-text-secondary" />
+        ) : (
+          <>
+            <button
+              onClick={onPreview}
+              className="p-1.5 rounded-md hover:bg-bg-card text-text-secondary hover:text-text-primary transition-colors"
+              title={isHe ? "נגן" : "Preview"}
+            >
+              <Play size={14} />
+            </button>
+            <button
+              onClick={onUpload}
+              className="p-1.5 rounded-md hover:bg-bg-card text-text-secondary hover:text-text-primary transition-colors"
+              title={isHe ? "העלה קובץ" : "Upload file"}
+            >
+              <Upload size={14} />
+            </button>
+            {hasCustom && (
+              <button
+                onClick={onRemove}
+                className="p-1.5 rounded-md hover:bg-alert-red/10 text-text-secondary hover:text-alert-red transition-colors"
+                title={isHe ? "חזור לברירת מחדל" : "Reset to default"}
+              >
+                <Trash2 size={14} />
+              </button>
+            )}
+          </>
         )}
       </div>
     </div>
