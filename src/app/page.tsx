@@ -3,11 +3,12 @@
 import { useMemo, useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useApp } from "@/lib/context";
-import { useAlerts, useMyCity, useAnimatedNumber } from "@/lib/hooks";
+import { useAlerts, useMyCity, useAnimatedNumber, useAlertSettings } from "@/lib/hooks";
 import { INFORMATIONAL_CATEGORIES } from "@/lib/oref";
 import { ShieldLogo, IconAlert, IconStats, IconClock } from "@/components/Icons";
-import { Shield, Search, Clock, Target, AlertTriangle, TrendingUp, TrendingDown, MapPin, BarChart3, X, Calendar } from "lucide-react";
+import { Shield, Search, Clock, Target, AlertTriangle, TrendingUp, TrendingDown, MapPin, BarChart3, X, Calendar, Settings } from "lucide-react";
 import SirenSound from "@/components/SirenSound";
+import AlertSettingsPanel from "@/components/AlertSettingsPanel";
 import StatCard from "@/components/Charts/StatCard";
 import CategoryChart from "@/components/Charts/CategoryChart";
 import HourlyChart from "@/components/Charts/HourlyChart";
@@ -40,6 +41,8 @@ export default function DashboardPage() {
   const { locale } = useApp();
   const { alerts: rawAlerts, activeAlerts, activeInfoAlerts, threatLevel, isLoading } = useAlerts();
   const { city, setCity } = useMyCity();
+  const { settings: alertSettings, setSettings: setAlertSettings } = useAlertSettings();
+  const [showSettings, setShowSettings] = useState(false);
   const isHe = locale === "he";
 
   // Date range filter — from first day of data collection onward
@@ -90,13 +93,24 @@ export default function DashboardPage() {
     [alerts, city]
   );
 
+  // Filter active alerts by selected city when city filter is enabled
+  const filteredActiveAlerts = useMemo(() => {
+    if (!alertSettings.cityFilterEnabled || !city) return activeAlerts;
+    return activeAlerts.filter((a) => a.cities.some((c) => c.includes(city) || city.includes(c)));
+  }, [activeAlerts, city, alertSettings.cityFilterEnabled]);
+
+  const filteredInfoAlerts = useMemo(() => {
+    if (!alertSettings.cityFilterEnabled || !city) return activeInfoAlerts;
+    return activeInfoAlerts.filter((a) => a.cities.some((c) => c.includes(city) || city.includes(c)));
+  }, [activeInfoAlerts, city, alertSettings.cityFilterEnabled]);
+
   return (
     <div className="min-h-screen bg-bg pt-16 pb-8">
-      <SirenSound active={activeAlerts.length > 0} activeAlerts={activeAlerts} />
+      <SirenSound active={filteredActiveAlerts.length > 0} activeAlerts={filteredActiveAlerts} settings={alertSettings} />
 
       {/* Active alert overlay + live banner */}
       <AnimatePresence>
-        {activeAlerts.length > 0 && (
+        {filteredActiveAlerts.length > 0 && (
           <>
             <motion.div
               initial={{ opacity: 0 }}
@@ -121,11 +135,11 @@ export default function DashboardPage() {
                     {isHe ? "התרעה פעילה" : "LIVE ALERT"}
                   </span>
                   <span className="text-xs opacity-80">
-                    — {activeAlerts[0].title || activeAlerts[0].category_name}
+                    — {filteredActiveAlerts[0].title || filteredActiveAlerts[0].category_name}
                   </span>
                 </div>
                 {(() => {
-                  const allCities = Array.from(new Set(activeAlerts.flatMap((a) => a.cities)));
+                  const allCities = Array.from(new Set(filteredActiveAlerts.flatMap((a) => a.cities)));
                   return (
                     <>
                       <div className="flex flex-wrap gap-1.5 max-h-20 overflow-y-auto">
@@ -154,9 +168,9 @@ export default function DashboardPage() {
 
       {/* Informational live banners — one compact banner per type (ended / expected) */}
       <AnimatePresence>
-        {activeInfoAlerts.length > 0 && (() => {
-          const ended = activeInfoAlerts.filter((a) => a.category === 13 || (a.title || "").includes("הסתיים") || (a.title || "").includes("הוסר"));
-          const expected = activeInfoAlerts.filter((a) => !ended.includes(a));
+        {filteredInfoAlerts.length > 0 && (() => {
+          const ended = filteredInfoAlerts.filter((a) => a.category === 13 || (a.title || "").includes("הסתיים") || (a.title || "").includes("הוסר"));
+          const expected = filteredInfoAlerts.filter((a) => !ended.includes(a));
           const groups = [
             { key: "ended", alerts: ended, isEnded: true },
             { key: "expected", alerts: expected, isEnded: false },
@@ -175,7 +189,7 @@ export default function DashboardPage() {
                 className={`fixed left-0 right-0 z-30 shadow-lg ${
                   group.isEnded ? "bg-green-600 text-white" : "bg-amber-500 text-black"
                 }`}
-                style={{ top: `calc(3.5rem + ${(activeAlerts.length > 0 ? 72 : 0) + idx * 36}px)` }}
+                style={{ top: `calc(3.5rem + ${(filteredActiveAlerts.length > 0 ? 72 : 0) + idx * 36}px)` }}
               >
                 <div className="max-w-6xl mx-auto px-4 py-2 flex items-center gap-2">
                   <span className={`w-2 h-2 rounded-full shrink-0 ${group.isEnded ? "bg-white" : "bg-black/30"}`} />
@@ -256,7 +270,40 @@ export default function DashboardPage() {
           <span className="text-[10px] text-text-secondary/60">
             ({displayAlerts.length} {isHe ? "התרעות" : "alerts"}{city ? ` — ${city}` : ""})
           </span>
+          <button
+            onClick={() => setShowSettings((v) => !v)}
+            className={`ms-auto p-1.5 rounded-lg transition-colors ${
+              showSettings ? "bg-alert-red/10 text-alert-red" : "text-text-secondary hover:text-text-primary hover:bg-bg"
+            }`}
+            title={isHe ? "הגדרות התרעות" : "Alert settings"}
+          >
+            <Settings size={16} />
+          </button>
         </motion.div>
+
+        {/* Alert settings panel */}
+        <AnimatePresence>
+          {showSettings && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              className="overflow-hidden mb-6"
+            >
+              <div className="bg-bg-card border border-border rounded-xl p-4">
+                <h3 className="text-sm font-semibold text-text-primary mb-3 flex items-center gap-2">
+                  <Settings size={14} />
+                  {isHe ? "הגדרות התרעות" : "Alert Settings"}
+                </h3>
+                <AlertSettingsPanel
+                  settings={alertSettings}
+                  onChange={setAlertSettings}
+                  isHe={isHe}
+                />
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Key numbers row */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">

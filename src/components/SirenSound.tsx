@@ -2,21 +2,25 @@
 
 import { useEffect, useRef, useCallback } from "react";
 import { type ProcessedAlert } from "@/lib/oref";
+import { type AlertSettings } from "@/lib/hooks";
 
 /**
- * Multi-sound alert system:
- * - /siren.mp3         → Real alert (rockets, drones, etc.) — loops while active
- * - /alert-early.mp3   → Early warning (התרעה מקדימה, cat 13) — gentle chime, plays once
- * - /alert-clear.mp3   → All clear — happy sound when alerts end
+ * Multi-sound alert system with customizable sounds:
+ * - Siren       → Real alert (rockets, drones, etc.) — loops while active
+ * - Early chime → Informational alert (cat 13) — plays once
+ * - All clear   → When alerts end — plays once
  *
+ * Users can upload custom MP3s; falls back to built-in sounds.
  * Respects browser autoplay policy (requires first user interaction).
  */
 export default function SirenSound({
   active,
   activeAlerts,
+  settings,
 }: {
   active: boolean;
   activeAlerts: ProcessedAlert[];
+  settings: AlertSettings;
 }) {
   const sirenRef = useRef<HTMLAudioElement | null>(null);
   const earlyRef = useRef<HTMLAudioElement | null>(null);
@@ -35,28 +39,30 @@ export default function SirenSound({
     };
   }, []);
 
-  // Pre-load all sounds
+  // Load / reload sounds when settings change
   useEffect(() => {
-    const siren = new Audio("/siren.mp3");
+    const vol = settings.volume / 100;
+
+    const siren = new Audio(settings.customSiren || "/siren.mp3");
     siren.loop = true;
     siren.preload = "auto";
-    siren.volume = 0.8;
+    siren.volume = vol;
     sirenRef.current = siren;
 
-    const early = new Audio("/alert-early.mp3");
+    const early = new Audio(settings.customEarly || "/alert-early.mp3");
     early.preload = "auto";
-    early.volume = 0.7;
+    early.volume = Math.max(0, vol - 0.1);
     earlyRef.current = early;
 
-    const clear = new Audio("/alert-clear.mp3");
+    const clear = new Audio(settings.customClear || "/alert-clear.mp3");
     clear.preload = "auto";
-    clear.volume = 0.6;
+    clear.volume = Math.max(0, vol - 0.2);
     clearRef.current = clear;
 
     return () => {
       [siren, early, clear].forEach((a) => { a.pause(); a.src = ""; });
     };
-  }, []);
+  }, [settings.customSiren, settings.customEarly, settings.customClear, settings.volume]);
 
   const playAudio = useCallback((audio: HTMLAudioElement | null) => {
     if (!hasInteractedRef.current || !audio) return;
@@ -89,7 +95,6 @@ export default function SirenSound({
   // Play appropriate sound based on active alerts
   useEffect(() => {
     if (active && activeAlerts.length > 0) {
-      // Check if it's only early warning alerts
       const hasRealAlert = activeAlerts.some((a) => a.category !== 13);
       const hasEarlyWarning = activeAlerts.some((a) => a.category === 13);
 
@@ -101,7 +106,6 @@ export default function SirenSound({
       wasActiveRef.current = true;
     } else {
       stopAll();
-      // Play "all clear" when alerts end (only if there was a previous alert)
       if (wasActiveRef.current) {
         wasActiveRef.current = false;
         playAudio(clearRef.current);

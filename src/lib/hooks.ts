@@ -206,6 +206,46 @@ export function useMyCity() {
   return { city, setCity };
 }
 
+// Alert sound & filter settings
+export interface AlertSettings {
+  customSiren: string | null;   // data URL or null for default
+  customEarly: string | null;
+  customClear: string | null;
+  volume: number;               // 0-100
+  cityFilterEnabled: boolean;   // only alert/show banners for selected city
+}
+
+const DEFAULT_SETTINGS: AlertSettings = {
+  customSiren: null,
+  customEarly: null,
+  customClear: null,
+  volume: 80,
+  cityFilterEnabled: false,
+};
+
+const SETTINGS_KEY = "iron-wall-alert-settings";
+
+export function useAlertSettings() {
+  const [settings, setSettingsState] = useState<AlertSettings>(DEFAULT_SETTINGS);
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(SETTINGS_KEY);
+      if (saved) setSettingsState({ ...DEFAULT_SETTINGS, ...JSON.parse(saved) });
+    } catch { /* ignore */ }
+  }, []);
+
+  const setSettings = useCallback((partial: Partial<AlertSettings>) => {
+    setSettingsState((prev) => {
+      const next = { ...prev, ...partial };
+      localStorage.setItem(SETTINGS_KEY, JSON.stringify(next));
+      return next;
+    });
+  }, []);
+
+  return { settings, setSettings };
+}
+
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
   userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
